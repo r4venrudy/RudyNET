@@ -129,7 +129,7 @@ RudyNET can be extended by:
 
 Author:
 -------
-Created for security research, penetration testing, and educational use.
+Created for security research, penetration testing, and educational use. by @r4ven.leet.
 
 --------------------------------------------------
 
