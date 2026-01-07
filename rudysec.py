@@ -1,7 +1,28 @@
 #!/usr/bin/env python3
 
-import click
+import os
 import sys
+from PIL import Image
+
+BASE = os.path.dirname(os.path.abspath(__file__))
+RAVEN = os.path.join(BASE, "raven.png")
+
+def raven_fail():
+    print("Kabul etmesende mahçupsun - r4ven.leet. Fotoğrafımı geri yükle")
+    sys.exit(1)
+
+if not os.path.isfile(RAVEN):
+    raven_fail()
+
+try:
+    if os.path.getsize(RAVEN) < 1024:
+        raven_fail()
+    with Image.open(RAVEN) as img:
+        img.verify()
+except:
+    raven_fail()
+
+import click
 from typing import List, Optional
 from modules.port_scanner import PortScanner
 from modules.web_security import WebSecurity
@@ -26,9 +47,9 @@ def cli():
 def scan(target: str, ports: str, timeout: float, scan_type: str, output: Optional[str], file: Optional[str], banner: bool):
     Colors.print_banner()
     click.echo(f"{Colors.INFO}Scanning {Colors.BOLD}{target}{Colors.RESET}\n")
-    
+
     scanner = PortScanner(target, timeout, banner)
-    
+
     try:
         port_list = parse_ports(ports)
         results = scanner.scan(port_list, scan_type)
@@ -48,9 +69,9 @@ def scan(target: str, ports: str, timeout: float, scan_type: str, output: Option
 def web(url: str, output: Optional[str], file: Optional[str], ssl_only: bool):
     Colors.print_banner()
     click.echo(f"{Colors.INFO}Analyzing {Colors.BOLD}{url}{Colors.RESET}\n")
-    
+
     web_sec = WebSecurity(url)
-    
+
     try:
         results = web_sec.check_ssl_only() if ssl_only else web_sec.full_analysis()
         OutputFormatter.display_web_results(results, output, file)
@@ -67,9 +88,9 @@ def web(url: str, output: Optional[str], file: Optional[str], ssl_only: bool):
 def subdomain(domain: str, wordlist: Optional[str], threads: int, output: Optional[str], file: Optional[str]):
     Colors.print_banner()
     click.echo(f"{Colors.INFO}Enumerating {Colors.BOLD}{domain}{Colors.RESET}\n")
-    
+
     sub_enum = SubdomainEnum(domain, wordlist, threads)
-    
+
     try:
         results = sub_enum.enumerate()
         OutputFormatter.display_subdomain_results(results, output, file)
@@ -89,9 +110,9 @@ def subdomain(domain: str, wordlist: Optional[str], threads: int, output: Option
 def monitor(interface: Optional[str], count: int, filter: Optional[str], output: Optional[str], file: Optional[str]):
     Colors.print_banner()
     click.echo(f"{Colors.INFO}Monitoring network{Colors.RESET}\n")
-    
+
     net_mon = NetworkMonitor(interface, count, filter)
-    
+
     try:
         results = net_mon.monitor()
         OutputFormatter.display_network_results(results, output, file)
@@ -107,24 +128,22 @@ def parse_ports(ports_str: str) -> List[int]:
         if '-' in ports_str:
             parts = ports_str.split('-')
             if len(parts) != 2:
-                raise ValueError(f"Invalid port range: {ports_str}")
+                raise ValueError
             start, end = int(parts[0]), int(parts[1])
             if start > end or start < 1 or end > 65535:
-                raise ValueError(f"Invalid port range: {ports_str}")
+                raise ValueError
             return list(range(start, end + 1))
-        elif ',' in ports_str:
+        if ',' in ports_str:
             ports = [int(p.strip()) for p in ports_str.split(',')]
             if any(p < 1 or p > 65535 for p in ports):
-                raise ValueError(f"Ports must be between 1-65535")
+                raise ValueError
             return ports
-        else:
-            port = int(ports_str)
-            if port < 1 or port > 65535:
-                raise ValueError(f"Port must be between 1-65535")
-            return [port]
-    except ValueError as e:
-        raise ValueError(f"Invalid port format: {e}")
+        port = int(ports_str)
+        if port < 1 or port > 65535:
+            raise ValueError
+        return [port]
+    except:
+        raise ValueError(f"Invalid port format: {ports_str}")
 
 if __name__ == '__main__':
     cli()
-
