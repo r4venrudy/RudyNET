@@ -1,140 +1,190 @@
-##################################################
-#              RudyNET Security Tool             #
-##################################################
+<div align="center">
 
-Description:
--------------
-RudyNET is a multi-purpose security scanning toolkit designed for reconnaissance,
-security auditing, and penetration testing workflows. It combines several essential
-network and web security analysis techniques into a single command-line interface.
+# RudyNET Security Tool
 
-The tool is built for speed, usability, and extensibility, making it suitable for
-both learning environments and authorized real-world security assessments.
+**A fast, extensible, multi-purpose security scanning toolkit for reconnaissance, auditing, and authorized penetration testing.**
 
---------------------------------------------------
+[![Python](https://img.shields.io/badge/Python-3.7%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20Windows%20%7C%20macOS-lightgrey)](#requirements)
+[![License](https://img.shields.io/badge/License-As--Is-red)](#license)
+[![Security](https://img.shields.io/badge/Use-Authorized%20Testing%20Only-darkred)](#security-and-legal-notice)
 
-Features:
----------
-1. Port Scanning
-   - TCP and UDP port scanning
-   - Custom port ranges
-   - Service detection and banner grabbing
-   - Multi-threaded scanning for performance
+</div>
 
-2. Web Security Analysis
-   - SSL/TLS certificate inspection
-   - Security headers analysis
-   - Web security posture evaluation
-   - Optional focused SSL-only checks
+---
 
-3. Subdomain Enumeration
-   - DNS-based subdomain discovery
-   - Custom wordlist support
-   - Multi-threaded enumeration
-   - Fast and efficient discovery process
+## Overview
 
-4. Network Monitoring
-   - Real-time traffic monitoring
-   - Packet capture and inspection
-   - BPF filter support
-   - Cross-platform compatibility
+**RudyNET** is a multi-purpose command-line security toolkit designed for reconnaissance, security auditing, and penetration testing workflows.
 
---------------------------------------------------
+It combines essential network and web security analysis techniques within a single interface. RudyNET is built with speed, usability, and extensibility in mind, making it suitable for cybersecurity students, researchers, and professionals conducting authorized security assessments.
 
-Requirements:
--------------
-- Python 3.7 or newer
-- Supported OS: Linux, Windows, macOS
-- Internet access
-- Elevated privileges for some network features (Linux)
+## Features
 
-Required Python packages:
--------------------------
-- click
-- requests
-- dnspython
-- scapy (optional, Linux only)
+| Module | Capabilities |
+|---|---|
+| **Port Scanner** | TCP and UDP scanning, custom port ranges, service detection, banner grabbing, and multi-threaded execution |
+| **Web Security Analysis** | SSL/TLS certificate inspection, HTTP security-header analysis, security posture evaluation, and focused SSL checks |
+| **Subdomain Enumeration** | DNS-based discovery, custom wordlist support, multi-threaded enumeration, and efficient resolution |
+| **Network Monitoring** | Real-time traffic monitoring, packet capture, packet inspection, BPF filtering, and cross-platform support |
+| **Report Exporting** | Export scan results in JSON, CSV, or TXT format |
 
---------------------------------------------------
+## Requirements
 
-Installation:
--------------
-1. Clone or download the project files.
+| Requirement | Details |
+|---|---|
+| **Python** | Python 3.7 or newer |
+| **Operating Systems** | Linux, Windows, and macOS |
+| **Internet Connection** | Required for remote scanning and DNS operations |
+| **Privileges** | Some packet and network operations may require elevated privileges |
+| **Recommended Platform** | Linux for complete network-monitoring functionality |
 
-2. Install dependencies:
-   pip install -r requirements.txt
+### Python Dependencies
 
-3. Run the tool:
-   python rudynet.py --help
+- `click`
+- `requests`
+- `dnspython`
+- `scapy` — optional and primarily used for Linux network features
 
---------------------------------------------------
+## Installation
 
-Usage:
-------
-RudyNET is operated through subcommands.
+Clone the repository:
 
-Examples:
+```bash
+git clone https://github.com/USERNAME/RudyNET.git
+cd RudyNET
+```
 
-- Port scanning:
-  python rudynet.py scan -t example.com -p 80,443,8080
+Create a virtual environment:
 
-- Web security analysis:
-  python rudynet.py web -u https://example.com
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
 
-- Subdomain enumeration:
-  python rudynet.py subdomain -d example.com
+Install the required packages:
 
-- Network monitoring:
-  python rudynet.py monitor -i eth0 -c 100
+```bash
+pip install -r requirements.txt
+```
 
---------------------------------------------------
+Display the help menu:
 
-Output Format:
---------------
-- Results are displayed directly in the terminal.
-- Color-coded output improves readability.
-- Progress indicators show real-time scan status.
-- Results can be exported as JSON, CSV, or TXT files.
+```bash
+python rudynet.py --help
+```
 
---------------------------------------------------
+## Usage
 
-Error Handling:
----------------
-- Network timeouts are handled gracefully.
-- Invalid targets do not crash the application.
-- Partial failures still return usable results.
-- Clear error messages are displayed when issues occur.
+RudyNET operates through dedicated subcommands for each security module.
 
---------------------------------------------------
+### Port Scanning
 
-Security Notes:
----------------
-- RudyNET performs active scanning operations.
-- Only scan systems you own or have explicit authorization to test.
-- Unauthorized scanning may be illegal.
-- The authors are not responsible for misuse.
+Scan selected TCP or UDP ports and attempt service detection:
 
---------------------------------------------------
+```bash
+python rudynet.py scan -t example.com -p 80,443,8080
+```
 
-Customization:
---------------
-RudyNET can be extended by:
-- Adding new scanning modules
-- Integrating external APIs
-- Expanding output formats
-- Improving detection logic
-- Adding automation workflows
+### Web Security Analysis
 
---------------------------------------------------
+Inspect SSL/TLS configuration, security headers, and the general security posture of a website:
 
-Author:
--------
-Created for security research, penetration testing, and educational use. by @r4ven.leet.
+```bash
+python rudynet.py web -u https://example.com
+```
 
---------------------------------------------------
+### Subdomain Enumeration
 
-License:
---------
-Provided as-is.
-Use responsibly.
-For authorized testing only.
+Discover DNS-based subdomains:
+
+```bash
+python rudynet.py subdomain -d example.com
+```
+
+### Network Monitoring
+
+Capture and inspect packets from a selected network interface:
+
+```bash
+python rudynet.py monitor -i eth0 -c 100
+```
+
+> Network monitoring may require administrator or root privileges.
+
+## Command Overview
+
+| Command | Purpose | Example |
+|---|---|---|
+| `scan` | Scan ports and identify exposed services | `python rudynet.py scan -t example.com -p 1-1000` |
+| `web` | Analyze web and SSL/TLS security | `python rudynet.py web -u https://example.com` |
+| `subdomain` | Enumerate subdomains | `python rudynet.py subdomain -d example.com` |
+| `monitor` | Monitor and inspect network traffic | `python rudynet.py monitor -i eth0 -c 100` |
+
+## Output
+
+RudyNET provides readable terminal output designed for fast analysis:
+
+- Color-coded findings
+- Real-time progress indicators
+- Clear status and error messages
+- Partial results when individual checks fail
+- JSON, CSV, and TXT export support
+
+Example export formats:
+
+```text
+results.json
+results.csv
+results.txt
+```
+
+## Error Handling
+
+RudyNET is designed to handle common operational problems gracefully:
+
+- Network timeouts do not terminate the entire process
+- Invalid targets are detected and reported clearly
+- Partial module failures still return usable findings
+- Connection and permission errors produce understandable messages
+- Interrupted operations preserve available results where possible
+
+## Customization and Development
+
+RudyNET can be expanded through additional modules and integrations, including:
+
+- New network and application scanning modules
+- External threat-intelligence API integrations
+- Additional reporting and export formats
+- Improved service and vulnerability detection
+- Automated reconnaissance workflows
+- Custom security policies and detection rules
+
+Contributions, feature suggestions, and responsible improvements are welcome.
+
+## Security and Legal Notice
+
+> [!CAUTION]
+> RudyNET performs active network and web scanning operations. Only use this tool against systems you own or have explicit authorization to test.
+
+Unauthorized scanning, packet capture, or security testing may violate applicable laws, regulations, contracts, or acceptable-use policies.
+
+The author assumes no responsibility for misuse, damage, service disruption, data loss, or illegal activity resulting from the use of this software.
+
+## Author
+
+Created for security research, authorized penetration testing, and cybersecurity education by **[@r4ven.leet](https://github.com/r4ven-leet)**.
+
+## License
+
+RudyNET is provided **as-is**, without warranties or guarantees of any kind.
+
+Use responsibly and exclusively for legitimate, authorized security testing.
+
+---
+
+<div align="center">
+
+**RudyNET — Reconnaissance. Analysis. Security.**
+
+</div>
