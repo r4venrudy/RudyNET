@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional, Set
 
 import dns.exception
 import dns.resolver
+import requests
 
 DEFAULT_WORDLIST = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                                 "data", "subdomains.txt")
@@ -16,6 +17,19 @@ def load_wordlist(path: Optional[str]) -> List[str]:
     with open(path or DEFAULT_WORDLIST, encoding="utf-8", errors="ignore") as fh:
         words = {line.strip().lower() for line in fh if line.strip() and not line.startswith("#")}
     return sorted(words)
+
+
+def crtsh_names(domain: str, timeout: float = 20.0) -> List[str]:
+    """Passive discovery: hostnames seen in public certificate-transparency logs."""
+    resp = requests.get("https://crt.sh/", params={"q": f"%.{domain}", "output": "json"}, timeout=timeout)
+    resp.raise_for_status()
+    names: Set[str] = set()
+    for entry in resp.json():
+        for name in entry.get("name_value", "").splitlines():
+            name = name.strip().lower().lstrip("*.")
+            if name == domain or name.endswith("." + domain):
+                names.add(name)
+    return sorted(names)
 
 
 class SubdomainEnum:

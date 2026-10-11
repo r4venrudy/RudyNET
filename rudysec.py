@@ -91,9 +91,10 @@ def web(url: str, output: Optional[str], file: Optional[str], ssl_only: bool):
 @click.option('-d', '--domain', required=True, help='Target domain')
 @click.option('-w', '--wordlist', help='Wordlist file')
 @click.option('-t', '--threads', default=50, type=int, help='Threads')
+@click.option('--crtsh', is_flag=True, help='Also pull names from certificate-transparency logs (crt.sh)')
 @click.option('-o', '--output', type=click.Choice(['json', 'csv', 'txt']))
 @click.option('-f', '--file', help='Output file')
-def subdomain(domain: str, wordlist: Optional[str], threads: int, output: Optional[str], file: Optional[str]):
+def subdomain(domain: str, wordlist: Optional[str], threads: int, crtsh: bool, output: Optional[str], file: Optional[str]):
     Colors.print_banner()
     click.echo(f"{Colors.INFO}Enumerating {Colors.BOLD}{domain}{Colors.RESET}\n")
 
@@ -101,7 +102,15 @@ def subdomain(domain: str, wordlist: Optional[str], threads: int, output: Option
     sub_enum = SubdomainEnum(domain, wordlist, threads)
 
     try:
-        results = sub_enum.enumerate()
+        extra = []
+        if crtsh:
+            from modules.subdomain_enum import crtsh_names
+            try:
+                extra = crtsh_names(sub_enum.domain)
+                click.echo(f"{Colors.INFO}crt.sh returned {len(extra)} names")
+            except Exception as e:
+                click.echo(f"{Colors.WARNING}crt.sh lookup failed, continuing with wordlist only: {e}")
+        results = sub_enum.enumerate(extra)
         OutputFormatter.display_subdomain_results(results, output, file)
     except KeyboardInterrupt:
         click.echo(f"\n{Colors.WARNING}Interrupted{Colors.RESET}")
