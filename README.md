@@ -86,6 +86,8 @@ Scan selected TCP or UDP ports and attempt service detection:
 python rudynet.py scan -t example.com -p 80,443,8080
 ```
 
+Add `--banner` to read service greetings (SSH, SMTP, FTP); silent ports get a polite HTTP `HEAD` probe. `-s udp` sends DNS and NTP probes where it can, and only reports ports that actually answer.
+
 ### Web Security Analysis
 
 Inspect SSL/TLS configuration, security headers, and the general security posture of a website:
@@ -101,6 +103,8 @@ Discover DNS-based subdomains:
 ```bash
 python rudynet.py subdomain -d example.com
 ```
+
+Without `-w`, RudyNET uses its built-in list in `data/subdomains.txt`. It probes a random label first, so wildcard DNS answers are filtered out instead of flooding the results. Add `--crtsh` to also pull hostnames from public certificate-transparency logs.
 
 ### Network Monitoring
 
