@@ -63,6 +63,20 @@ data/subdomains.txt        Default wordlist
 tests/                    Unit tests
 ```
 
+## GitHub package
+
+The non-root CLI image is built and unit-tested before publication.
+
+```sh
+docker run --rm ghcr.io/r4venrudy/rudynet:latest --help
+docker run --rm ghcr.io/r4venrudy/rudynet:latest web --url https://example.com
+```
+
+Use only authorized targets. Docker's network namespace applies to port scans; container loopback is the container itself. Bind-mount a writable directory at `/data` and choose an absolute output path there when exporting reports. Linux users may pass `--user "$(id -u):$(id -g)"` for a bind mount they own.
+
+Images use `latest` and `sha-<full commit SHA>` tags. This package includes the implemented `scan`, `web`, and `subdomain` commands; it does not add the missing packet-monitor module.
+
+
 ## License
 
 [MIT](LICENSE). Preserve the attribution in the license file.
