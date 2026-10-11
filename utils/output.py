@@ -1,0 +1,91 @@
+import csv
+import io
+import json
+from typing import Any, Dict, Optional
+
+from utils.colors import Colors
+
+
+def _flatten(data: Any, prefix: str = "") -> Dict[str, Any]:
+    """Flatten nested dicts/lists into dotted keys for CSV and TXT export."""
+    flat: Dict[str, Any] = {}
+    if isinstance(data, dict):
+        for k, v in data.items():
+            flat.update(_flatten(v, f"{prefix}{k}."))
+    elif isinstance(data, list):
+        for i, v in enumerate(data):
+            flat.update(_flatten(v, f"{prefix}{i}."))
+    else:
+        flat[prefix.rstrip(".")] = data
+    return flat
+
+
+def render(results: Any, fmt: str) -> str:
+    if fmt == "json":
+        return json.dumps(results, indent=2, default=str)
+    rows = _flatten(results)
+    if fmt == "csv":
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        writer.writerow(["key", "value"])
+        for k, v in rows.items():
+            writer.writerow([k, v])
+        return buf.getvalue()
+    if fmt == "txt":
+        return "\n".join(f"{k}: {v}" for k, v in rows.items()) + "\n"
+    raise ValueError(f"Unknown output format: {fmt}")
+
+
+def export(results: Any, fmt: Optional[str], file: Optional[str]) -> None:
+    if not fmt:
+        if file:
+            fmt = file.rsplit(".", 1)[-1].lower() if "." in file else "json"
+        else:
+            return
+    text = render(results, fmt)
+    if file:
+        with open(file, "w", encoding="utf-8", newline="") as fh:
+            fh.write(text)
+        print(f"\n{Colors.SUCCESS}Saved {fmt.upper()} report to {file}")
+    else:
+        print(text)
+
+
+class OutputFormatter:
+    @staticmethod
+    def display_web_results(results: Dict[str, Any], output: Optional[str] = None, file: Optional[str] = None) -> None:
+        tls = results.get("tls")
+        if tls:
+            print(f"{Colors.BOLD}TLS / Certificate{Colors.RESET}")
+            if tls.get("error"):
+                print(f"  {Colors.ERROR}{tls['error']}")
+            else:
+                print(f"  Protocol     {tls.get('protocol')}")
+                print(f"  Cipher       {tls.get('cipher')}")
+                print(f"  Subject      {tls.get('subject')}")
+                print(f"  Issuer       {tls.get('issuer')}")
+                print(f"  Expires      {tls.get('not_after')} ({tls.get('days_left')} days left)")
+                for issue in tls.get("issues", []):
+                    print(f"  {Colors.WARNING}{issue}")
+            print()
+
+        headers = results.get("headers")
+        if headers:
+            print(f"{Colors.BOLD}Security Headers{Colors.RESET}")
+            if headers.get("error"):
+                print(f"  {Colors.ERROR}{headers['error']}")
+            else:
+                print(f"  Final URL    {headers.get('final_url')} (HTTP {headers.get('status')})")
+                for check in headers.get("checks", []):
+                    mark = Colors.SUCCESS if check["ok"] else Colors.WARNING
+                    print(f"  {mark}{check['header']}: {check['detail']}")
+                for leak in headers.get("leaks", []):
+                    print(f"  {Colors.WARNING}Information leak: {leak}")
+                for issue in headers.get("cookie_issues", []):
+                    print(f"  {Colors.WARNING}Cookie: {issue}")
+            print()
+
+        if "score" in results:
+            print(f"{Colors.BOLD}Overall{Colors.RESET}  {Colors.grade(results['grade'])}  ({results['score']}/100)")
+
+        export(results, output, file)
