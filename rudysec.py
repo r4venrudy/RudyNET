@@ -24,15 +24,22 @@ except:
 
 import click
 from typing import List, Optional
-from modules.port_scanner import PortScanner
-from modules.web_security import WebSecurity
-from modules.subdomain_enum import SubdomainEnum
-from modules.network_monitor import NetworkMonitor
+import importlib
 from utils.colors import Colors
 from utils.output import OutputFormatter
 
+
+def load_module(module: str, cls: str):
+    # Modules are imported per command so one missing optional dependency
+    # (e.g. scapy for `monitor`) doesn't break every other command.
+    try:
+        return getattr(importlib.import_module(f"modules.{module}"), cls)
+    except ImportError as e:
+        click.echo(f"{Colors.ERROR}The '{module}' module is unavailable: {e}{Colors.RESET}")
+        sys.exit(1)
+
 @click.group()
-@click.version_option(version='1.0.0', prog_name='NetShark')
+@click.version_option(version='1.1.0', prog_name='RudyNET')
 def cli():
     pass
 
@@ -48,6 +55,7 @@ def scan(target: str, ports: str, timeout: float, scan_type: str, output: Option
     Colors.print_banner()
     click.echo(f"{Colors.INFO}Scanning {Colors.BOLD}{target}{Colors.RESET}\n")
 
+    PortScanner = load_module('port_scanner', 'PortScanner')
     scanner = PortScanner(target, timeout, banner)
 
     try:
@@ -70,9 +78,9 @@ def web(url: str, output: Optional[str], file: Optional[str], ssl_only: bool):
     Colors.print_banner()
     click.echo(f"{Colors.INFO}Analyzing {Colors.BOLD}{url}{Colors.RESET}\n")
 
-    web_sec = WebSecurity(url)
-
+    WebSecurity = load_module('web_security', 'WebSecurity')
     try:
+        web_sec = WebSecurity(url)
         results = web_sec.check_ssl_only() if ssl_only else web_sec.full_analysis()
         OutputFormatter.display_web_results(results, output, file)
     except Exception as e:
@@ -89,6 +97,7 @@ def subdomain(domain: str, wordlist: Optional[str], threads: int, output: Option
     Colors.print_banner()
     click.echo(f"{Colors.INFO}Enumerating {Colors.BOLD}{domain}{Colors.RESET}\n")
 
+    SubdomainEnum = load_module('subdomain_enum', 'SubdomainEnum')
     sub_enum = SubdomainEnum(domain, wordlist, threads)
 
     try:
@@ -111,6 +120,7 @@ def monitor(interface: Optional[str], count: int, filter: Optional[str], output:
     Colors.print_banner()
     click.echo(f"{Colors.INFO}Monitoring network{Colors.RESET}\n")
 
+    NetworkMonitor = load_module('network_monitor', 'NetworkMonitor')
     net_mon = NetworkMonitor(interface, count, filter)
 
     try:
