@@ -102,3 +102,13 @@ class OutputFormatter:
                 line += f" {Colors.DIM}{r['banner']}{Colors.RESET}"
             print(line)
         export(results, output, file)
+
+    @staticmethod
+    def display_subdomain_results(results: Dict[str, Any], output: Optional[str] = None, file: Optional[str] = None) -> None:
+        if results["wildcard"]:
+            print(f"{Colors.WARNING}Wildcard DNS detected ({', '.join(results['wildcard'])}); matching hits were filtered\n")
+        for r in results["found"]:
+            extra = f" {Colors.DIM}-> {r['cname']}{Colors.RESET}" if r.get("cname") else ""
+            print(f"{Colors.SUCCESS}{r['subdomain']:<40} {', '.join(r['ips'])}{extra}")
+        print(f"\n{Colors.INFO}{len(results['found'])} found out of {results['tried']} names tried")
+        export(results, output, file)
