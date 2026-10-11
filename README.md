@@ -51,7 +51,7 @@ It combines essential network and web security analysis techniques within a sing
 Clone the repository:
 
 ```bash
-git clone https://github.com/USERNAME/RudyNET.git
+git clone https://github.com/r4venrudy/RudyNET.git
 cd RudyNET
 ```
 
@@ -112,6 +112,23 @@ python rudynet.py monitor -i eth0 -c 100
 
 > Network monitoring may require administrator or root privileges.
 
+### Web Security Report
+
+`web` grades the target from A+ to F using:
+
+- TLS protocol, cipher, certificate issuer and days until expiry
+- HSTS (max-age of at least 180 days), CSP (flags `'unsafe-inline'` / `'unsafe-eval'`), X-Content-Type-Options, X-Frame-Options (or CSP `frame-ancestors`), Referrer-Policy and Permissions-Policy
+- Version-leaking headers such as `Server` and `X-Powered-By`
+- Cookies missing `Secure`, `HttpOnly` or `SameSite`
+- Whether plain HTTP ends up on HTTPS
+
+Save the report by passing a format, or let the file extension decide:
+
+```bash
+python rudynet.py web -u example.com -o json -f report.json
+python rudynet.py web -u example.com -f report.csv
+```
+
 ## Command Overview
 
 | Command | Purpose | Example |
@@ -137,6 +154,12 @@ Example export formats:
 results.json
 results.csv
 results.txt
+```
+
+## Running the Tests
+
+```bash
+python -m unittest discover -s tests
 ```
 
 ## Error Handling
