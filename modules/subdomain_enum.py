@@ -9,7 +9,7 @@ import dns.exception
 import dns.resolver
 
 DEFAULT_WORDLIST = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                                "wordlists", "subdomains.txt")
+                                "data", "subdomains.txt")
 
 
 def load_wordlist(path: Optional[str]) -> List[str]:
