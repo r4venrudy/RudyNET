@@ -1,217 +1,72 @@
-<div align="center">
+<p align="center"><img src="docs/banner.svg" alt="RudyNET — Network reconnaissance with inspectable evidence." width="100%"></p>
 
-# RudyNET Security Tool
+<p align="center">
+  <img src="https://img.shields.io/badge/Runtime-Python%20/%20CLI-55e0b6?style=flat-square&labelColor=101b28" alt="Python / CLI">
+  <img src="https://img.shields.io/badge/Docs-source_reviewed-55e0b6?style=flat-square&labelColor=101b28" alt="Documentation based on source review">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-55e0b6?style=flat-square&labelColor=101b28" alt="MIT license"></a>
+</p>
 
-**A fast, extensible, multi-purpose security scanning toolkit for reconnaissance, auditing, and authorized penetration testing.**
+<p align="center"><strong>Network reconnaissance with inspectable evidence.</strong></p>
 
-[![Python](https://img.shields.io/badge/Python-3.7%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
-[![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20Windows%20%7C%20macOS-lightgrey)](#requirements)
-[![License](https://img.shields.io/badge/License-As--Is-red)](#license)
-[![Security](https://img.shields.io/badge/Use-Authorized%20Testing%20Only-darkred)](#security-and-legal-notice)
-
-</div>
+<p align="center"><a href="#overview">Overview</a> · <a href="#capabilities">Capabilities</a> · <a href="#quick-start">Quick start</a> · <a href="#implementation-notes">Implementation notes</a></p>
 
 ---
 
 ## Overview
 
-**RudyNET** is a multi-purpose command-line security toolkit designed for reconnaissance, security auditing, and penetration testing workflows.
+A modular command-line toolkit for TCP/UDP port checks, banner observations, HTTP/TLS inspection and DNS-based subdomain discovery. Implemented commands return terminal output with optional JSON, CSV or text exports.
 
-It combines essential network and web security analysis techniques within a single interface. RudyNET is built with speed, usability, and extensibility in mind, making it suitable for cybersecurity students, researchers, and professionals conducting authorized security assessments.
+## Capabilities
 
-## Features
+| Command | Implemented behavior |
+| :--- | :--- |
+| `scan` | TCP connect checks, selected UDP probes and optional banner reads |
+| `web` | Certificate inspection, HTTP security-header heuristics and cookie observations |
+| `subdomain` | Wordlist-based DNS resolution, wildcard filtering, CNAME observations and optional crt.sh discovery |
 
-| Module | Capabilities |
-|---|---|
-| **Port Scanner** | TCP and UDP scanning, custom port ranges, service detection, banner grabbing, and multi-threaded execution |
-| **Web Security Analysis** | SSL/TLS certificate inspection, HTTP security-header analysis, security posture evaluation, and focused SSL checks |
-| **Subdomain Enumeration** | DNS-based discovery, custom wordlist support, multi-threaded enumeration, and efficient resolution |
-| **Network Monitoring** | Real-time traffic monitoring, packet capture, packet inspection, BPF filtering, and cross-platform support |
-| **Report Exporting** | Export scan results in JSON, CSV, or TXT format |
+## Quick start
 
-## Requirements
-
-| Requirement | Details |
-|---|---|
-| **Python** | Python 3.7 or newer |
-| **Operating Systems** | Linux, Windows, and macOS |
-| **Internet Connection** | Required for remote scanning and DNS operations |
-| **Privileges** | Some packet and network operations may require elevated privileges |
-| **Recommended Platform** | Linux for complete network-monitoring functionality |
-
-### Python Dependencies
-
-- `click`
-- `requests`
-- `dnspython`
-- `scapy` — optional and primarily used for Linux network features
-
-## Installation
-
-Clone the repository:
+Requires Python and the packages listed in `requirements.txt`. Keep the bundled `raven.png`; the CLI validates it during startup.
 
 ```bash
 git clone https://github.com/r4venrudy/RudyNET.git
 cd RudyNET
-```
-
-Create a virtual environment:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-Install the required packages:
-
-```bash
-pip install -r requirements.txt
-```
-
-Display the help menu:
-
-```bash
+python -m pip install -r requirements.txt
 python rudynet.py --help
 ```
 
-## Usage
-
-RudyNET operates through dedicated subcommands for each security module.
-
-### Port Scanning
-
-Scan selected TCP or UDP ports and attempt service detection:
+Examples for a local lab or a domain you administer:
 
 ```bash
-python rudynet.py scan -t example.com -p 80,443,8080
+python rudynet.py scan --target 127.0.0.1 --ports 80,443 --banner
+python rudynet.py web --url https://example.com --output json --file web.json
+python rudynet.py subdomain --domain example.com --crtsh --output json --file subdomains.json
+python -m unittest discover -s tests -v
 ```
 
-Add `--banner` to read service greetings (SSH, SMTP, FTP); silent ports get a polite HTTP `HEAD` probe. `-s udp` sends DNS and NTP probes where it can, and only reports ports that actually answer.
+## Implementation notes
 
-### Web Security Analysis
+- The entry point is `rudynet.py`; `rudysec.py` contains an alternate CLI with substantially overlapping behavior.
+- A `monitor` command is declared, but `modules/network_monitor.py` is absent. Packet monitoring is not currently implemented in this checkout.
+- UDP timeouts are ambiguous and are omitted from positive results; a lack of response does not establish that a port is closed. Port resolution currently uses IPv4.
+- Web grades are hardening heuristics. TLS metadata is inspected for the input host, while HTTP requests can follow redirects to another host; assess the final target independently when needed.
+- Subdomain discovery generates DNS queries and port checks initiate network connections. Scope targets explicitly and use only systems you own or are authorized to assess.
 
-Inspect SSL/TLS configuration, security headers, and the general security posture of a website:
-
-```bash
-python rudynet.py web -u https://example.com
-```
-
-### Subdomain Enumeration
-
-Discover DNS-based subdomains:
-
-```bash
-python rudynet.py subdomain -d example.com
-```
-
-Without `-w`, RudyNET uses its built-in list in `data/subdomains.txt`. It probes a random label first, so wildcard DNS answers are filtered out instead of flooding the results. Add `--crtsh` to also pull hostnames from public certificate-transparency logs.
-
-### Network Monitoring
-
-Capture and inspect packets from a selected network interface:
-
-```bash
-python rudynet.py monitor -i eth0 -c 100
-```
-
-> Network monitoring may require administrator or root privileges.
-
-### Web Security Report
-
-`web` grades the target from A+ to F using:
-
-- TLS protocol, cipher, certificate issuer and days until expiry
-- HSTS (max-age of at least 180 days), CSP (flags `'unsafe-inline'` / `'unsafe-eval'`), X-Content-Type-Options, X-Frame-Options (or CSP `frame-ancestors`), Referrer-Policy and Permissions-Policy
-- Version-leaking headers such as `Server` and `X-Powered-By`
-- Cookies missing `Secure`, `HttpOnly` or `SameSite`
-- Whether plain HTTP ends up on HTTPS
-
-Save the report by passing a format, or let the file extension decide:
-
-```bash
-python rudynet.py web -u example.com -o json -f report.json
-python rudynet.py web -u example.com -f report.csv
-```
-
-## Command Overview
-
-| Command | Purpose | Example |
-|---|---|---|
-| `scan` | Scan ports and identify exposed services | `python rudynet.py scan -t example.com -p 1-1000` |
-| `web` | Analyze web and SSL/TLS security | `python rudynet.py web -u https://example.com` |
-| `subdomain` | Enumerate subdomains | `python rudynet.py subdomain -d example.com` |
-| `monitor` | Monitor and inspect network traffic | `python rudynet.py monitor -i eth0 -c 100` |
-
-## Output
-
-RudyNET provides readable terminal output designed for fast analysis:
-
-- Color-coded findings
-- Real-time progress indicators
-- Clear status and error messages
-- Partial results when individual checks fail
-- JSON, CSV, and TXT export support
-
-Example export formats:
+## Project map
 
 ```text
-results.json
-results.csv
-results.txt
+rudynet.py                 Main Click CLI
+modules/port_scanner.py     TCP/UDP checks and banners
+modules/web_security.py     TLS and HTTP heuristics
+modules/subdomain_enum.py   DNS and certificate-transparency discovery
+data/subdomains.txt        Default wordlist
+tests/                    Unit tests
 ```
-
-## Running the Tests
-
-```bash
-python -m unittest discover -s tests
-```
-
-## Error Handling
-
-RudyNET is designed to handle common operational problems gracefully:
-
-- Network timeouts do not terminate the entire process
-- Invalid targets are detected and reported clearly
-- Partial module failures still return usable findings
-- Connection and permission errors produce understandable messages
-- Interrupted operations preserve available results where possible
-
-## Customization and Development
-
-RudyNET can be expanded through additional modules and integrations, including:
-
-- New network and application scanning modules
-- External threat-intelligence API integrations
-- Additional reporting and export formats
-- Improved service and vulnerability detection
-- Automated reconnaissance workflows
-- Custom security policies and detection rules
-
-Contributions, feature suggestions, and responsible improvements are welcome.
-
-## Security and Legal Notice
-
-> [!CAUTION]
-> RudyNET performs active network and web scanning operations. Only use this tool against systems you own or have explicit authorization to test.
-
-Unauthorized scanning, packet capture, or security testing may violate applicable laws, regulations, contracts, or acceptable-use policies.
-
-The author assumes no responsibility for misuse, damage, service disruption, data loss, or illegal activity resulting from the use of this software.
-
-## Author
-
-Created for security research, authorized penetration testing, and cybersecurity education by **[@r4ven.leet](https://github.com/r4ven-leet)**.
 
 ## License
 
-RudyNET is provided **as-is**, without warranties or guarantees of any kind.
-
-Use responsibly and exclusively for legitimate, authorized security testing.
+[MIT](LICENSE). Preserve the attribution in the license file.
 
 ---
 
-<div align="center">
-
-**RudyNET — Reconnaissance. Analysis. Security.**
-
-</div>
+<p align="center">Part of the <a href="https://github.com/r4venrudy">r4venrudy</a> project collection.</p>
