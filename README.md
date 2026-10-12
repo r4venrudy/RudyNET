@@ -47,7 +47,6 @@ python -m unittest discover -s tests -v
 ## Implementation notes
 
 - The entry point is `rudynet.py`; `rudysec.py` is kept as an alias that runs the same CLI.
-- A `monitor` command is declared, but `modules/network_monitor.py` is absent. Packet monitoring is not currently implemented in this checkout.
 - UDP timeouts are ambiguous and are omitted from positive results; a lack of response does not establish that a port is closed. Port resolution currently uses IPv4.
 - Web grades are hardening heuristics. TLS metadata is inspected for the input host, while HTTP requests can follow redirects to another host; assess the final target independently when needed.
 - Subdomain discovery generates DNS queries and port checks initiate network connections. Scope targets explicitly and use only systems you own or are authorized to assess.

@@ -121,29 +121,6 @@ def subdomain(domain: str, wordlist: Optional[str], threads: int, crtsh: bool, t
         click.echo(f"{Colors.ERROR}Error: {e}{Colors.RESET}")
         sys.exit(1)
 
-@cli.command()
-@click.option('-i', '--interface', help='Network interface')
-@click.option('-c', '--count', default=100, type=int, help='Packet count')
-@click.option('-f', '--filter', help='BPF filter')
-@click.option('-o', '--output', type=click.Choice(['json', 'csv', 'txt']))
-@click.option('--file', help='Output file')
-def monitor(interface: Optional[str], count: int, filter: Optional[str], output: Optional[str], file: Optional[str]):
-    Colors.print_banner()
-    click.echo(f"{Colors.INFO}Monitoring network{Colors.RESET}\n")
-
-    NetworkMonitor = load_module('network_monitor', 'NetworkMonitor')
-    net_mon = NetworkMonitor(interface, count, filter)
-
-    try:
-        results = net_mon.monitor()
-        OutputFormatter.display_network_results(results, output, file)
-    except KeyboardInterrupt:
-        click.echo(f"\n{Colors.WARNING}Stopped{Colors.RESET}")
-        sys.exit(1)
-    except Exception as e:
-        click.echo(f"{Colors.ERROR}Error: {e}{Colors.RESET}")
-        sys.exit(1)
-
 def parse_ports(ports_str: str) -> List[int]:
     try:
         if '-' in ports_str:
