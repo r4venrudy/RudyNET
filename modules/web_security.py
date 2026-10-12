@@ -26,6 +26,7 @@ WEAK_PROTOCOLS = {"SSLv2", "SSLv3", "TLSv1", "TLSv1.1"}
 
 
 def normalize_url(url: str) -> str:
+    """Add https:// when no scheme is given and reject anything that isn't an http(s) URL with a host."""
     url = url.strip()
     if "://" not in url:
         url = "https://" + url
@@ -41,6 +42,7 @@ def _name(rdn_seq: Tuple) -> str:
 
 
 def check_hsts(value: str) -> Tuple[bool, str]:
+    """Pass when max-age is at least 180 days; report includeSubDomains/preload when present."""
     directives = {d.strip().split("=")[0].lower(): d.strip() for d in value.split(";") if d.strip()}
     max_age = 0
     if "max-age" in directives:
@@ -55,6 +57,7 @@ def check_hsts(value: str) -> Tuple[bool, str]:
 
 
 def check_csp(value: str) -> Tuple[bool, str]:
+    """Fail a CSP that allows unsafe-inline/unsafe-eval or has no default-src/script-src."""
     lowered = value.lower()
     problems = [tok for tok in ("'unsafe-inline'", "'unsafe-eval'") if tok in lowered]
     if "default-src" not in lowered and "script-src" not in lowered:
@@ -65,6 +68,7 @@ def check_csp(value: str) -> Tuple[bool, str]:
 
 
 def check_frame_options(value: str) -> Tuple[bool, str]:
+    """Only DENY and SAMEORIGIN are valid X-Frame-Options values."""
     if value.upper() in ("DENY", "SAMEORIGIN"):
         return True, value.upper()
     return False, f"unexpected value '{value}'"
@@ -109,6 +113,7 @@ def evaluate_headers(headers: Dict[str, str]) -> Dict[str, Any]:
 
 
 def evaluate_cookies(set_cookie_values: List[str], https: bool) -> List[str]:
+    """List cookies missing Secure (on HTTPS), HttpOnly or SameSite."""
     issues = []
     for raw in set_cookie_values:
         name = raw.split("=", 1)[0].strip()
@@ -126,6 +131,7 @@ def evaluate_cookies(set_cookie_values: List[str], https: bool) -> List[str]:
 
 
 def grade(score: int) -> str:
+    """Map a 0-100 score to A+ .. F."""
     for threshold, letter in ((95, "A+"), (85, "A"), (70, "B"), (55, "C"), (40, "D")):
         if score >= threshold:
             return letter
