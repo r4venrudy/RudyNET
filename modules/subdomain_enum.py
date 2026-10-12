@@ -14,6 +14,7 @@ DEFAULT_WORDLIST = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(
 
 
 def load_wordlist(path: Optional[str]) -> List[str]:
+    """Read a wordlist (or the bundled data/subdomains.txt), lowercased, deduplicated, comments skipped."""
     with open(path or DEFAULT_WORDLIST, encoding="utf-8", errors="ignore") as fh:
         words = {line.strip().lower() for line in fh if line.strip() and not line.startswith("#")}
     return sorted(words)
@@ -53,6 +54,7 @@ class SubdomainEnum:
         return set(self._resolve(probe))
 
     def _check(self, name: str, wildcard: Set[str]) -> Optional[Dict[str, Any]]:
+        """Resolve one name; drop it if it only returns wildcard addresses."""
         ips = self._resolve(name)
         if not ips or (wildcard and set(ips) <= wildcard):
             return None
@@ -60,6 +62,7 @@ class SubdomainEnum:
         return {"subdomain": name, "ips": ips, "cname": cname[0].rstrip(".") if cname else None}
 
     def enumerate(self, extra: Optional[List[str]] = None) -> Dict[str, Any]:
+        """Resolve every wordlist name plus `extra` full hostnames (e.g. from crt.sh) in parallel."""
         wildcard = self.wildcard_ips()
         names = {f"{w}.{self.domain}" for w in self.words}
         names.update(extra or [])

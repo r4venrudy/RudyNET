@@ -21,6 +21,7 @@ def _flatten(data: Any, prefix: str = "") -> Dict[str, Any]:
 
 
 def render(results: Any, fmt: str) -> str:
+    """Serialize results as json, or as flattened key/value csv or txt."""
     if fmt == "json":
         return json.dumps(results, indent=2, default=str)
     rows = _flatten(results)
@@ -37,6 +38,7 @@ def render(results: Any, fmt: str) -> str:
 
 
 def export(results: Any, fmt: Optional[str], file: Optional[str]) -> None:
+    """Write results to `file` (format from -o or the file extension) or print them; no-op without either."""
     if not fmt:
         if file:
             fmt = file.rsplit(".", 1)[-1].lower() if "." in file else "json"
