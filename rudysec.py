@@ -74,13 +74,14 @@ def scan(target: str, ports: str, timeout: float, scan_type: str, output: Option
 @click.option('-o', '--output', type=click.Choice(['json', 'csv', 'txt']))
 @click.option('-f', '--file', help='Output file')
 @click.option('--ssl-only', is_flag=True, help='SSL/TLS only')
-def web(url: str, output: Optional[str], file: Optional[str], ssl_only: bool):
+@click.option('-T', '--timeout', default=10.0, type=float, help='Timeout per request (seconds)')
+def web(url: str, output: Optional[str], file: Optional[str], ssl_only: bool, timeout: float):
     Colors.print_banner()
     click.echo(f"{Colors.INFO}Analyzing {Colors.BOLD}{url}{Colors.RESET}\n")
 
     WebSecurity = load_module('web_security', 'WebSecurity')
     try:
-        web_sec = WebSecurity(url)
+        web_sec = WebSecurity(url, timeout)
         results = web_sec.check_ssl_only() if ssl_only else web_sec.full_analysis()
         OutputFormatter.display_web_results(results, output, file)
     except Exception as e:
