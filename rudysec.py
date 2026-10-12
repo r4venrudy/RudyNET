@@ -93,14 +93,15 @@ def web(url: str, output: Optional[str], file: Optional[str], ssl_only: bool, ti
 @click.option('-w', '--wordlist', help='Wordlist file')
 @click.option('-t', '--threads', default=50, type=int, help='Threads')
 @click.option('--crtsh', is_flag=True, help='Also pull names from certificate-transparency logs (crt.sh)')
+@click.option('-T', '--timeout', default=3.0, type=float, help='DNS timeout per name (seconds)')
 @click.option('-o', '--output', type=click.Choice(['json', 'csv', 'txt']))
 @click.option('-f', '--file', help='Output file')
-def subdomain(domain: str, wordlist: Optional[str], threads: int, crtsh: bool, output: Optional[str], file: Optional[str]):
+def subdomain(domain: str, wordlist: Optional[str], threads: int, crtsh: bool, timeout: float, output: Optional[str], file: Optional[str]):
     Colors.print_banner()
     click.echo(f"{Colors.INFO}Enumerating {Colors.BOLD}{domain}{Colors.RESET}\n")
 
     SubdomainEnum = load_module('subdomain_enum', 'SubdomainEnum')
-    sub_enum = SubdomainEnum(domain, wordlist, threads)
+    sub_enum = SubdomainEnum(domain, wordlist, threads, timeout)
 
     try:
         extra = []
