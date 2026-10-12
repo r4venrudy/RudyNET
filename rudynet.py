@@ -147,13 +147,15 @@ def monitor(interface: Optional[str], count: int, filter: Optional[str], output:
 def parse_ports(ports_str: str) -> List[int]:
     try:
         if '-' in ports_str:
-            a, b = ports_str.split('-')
-            start, end = int(a), int(b)
+            parts = ports_str.split('-')
+            if len(parts) != 2:
+                raise ValueError
+            start, end = int(parts[0]), int(parts[1])
             if start > end or start < 1 or end > 65535:
                 raise ValueError
             return list(range(start, end + 1))
         if ',' in ports_str:
-            ports = [int(p.strip()) for p in ports_str.split(',')]
+            ports = sorted({int(p.strip()) for p in ports_str.split(',') if p.strip()})
             if any(p < 1 or p > 65535 for p in ports):
                 raise ValueError
             return ports
