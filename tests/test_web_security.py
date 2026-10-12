@@ -24,6 +24,9 @@ class NormalizeUrlTests(unittest.TestCase):
     def test_adds_https_scheme(self):
         self.assertEqual(normalize_url("example.com"), "https://example.com")
 
+    def test_keeps_explicit_port_and_path(self):
+        self.assertEqual(normalize_url(" http://example.com:8080/login "), "http://example.com:8080/login")
+
     def test_rejects_other_schemes(self):
         with self.assertRaises(ValueError):
             normalize_url("ftp://example.com")
@@ -81,6 +84,9 @@ class CookieTests(unittest.TestCase):
     def test_flags_missing_attributes(self):
         issues = evaluate_cookies(["sid=abc; Path=/", "ok=1; Secure; HttpOnly; SameSite=Lax"], https=True)
         self.assertEqual(issues, ["sid missing Secure, HttpOnly, SameSite"])
+
+    def test_secure_not_required_over_plain_http(self):
+        self.assertEqual(evaluate_cookies(["a=1; HttpOnly; SameSite=Strict"], https=False), [])
 
 
 class GradeAndOutputTests(unittest.TestCase):
