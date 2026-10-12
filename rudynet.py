@@ -41,7 +41,7 @@ def load_module(module: str, cls: str):
 @click.group()
 @click.version_option(version='1.1.0', prog_name='RudyNET')
 def cli():
-    pass
+    """RudyNET: port scanning, web security grading and subdomain discovery for systems you are authorized to test."""
 
 @cli.command()
 @click.option('-t', '--target', required=True, help='Target IP or hostname')
@@ -52,6 +52,7 @@ def cli():
 @click.option('-f', '--file', help='Output file')
 @click.option('--banner', is_flag=True, help='Grab banners')
 def scan(target: str, ports: str, timeout: float, scan_type: str, output: Optional[str], file: Optional[str], banner: bool):
+    """Scan TCP/UDP ports on a host and optionally read service banners."""
     Colors.print_banner()
     click.echo(f"{Colors.INFO}Scanning {Colors.BOLD}{target}{Colors.RESET}\n")
 
@@ -76,6 +77,7 @@ def scan(target: str, ports: str, timeout: float, scan_type: str, output: Option
 @click.option('--ssl-only', is_flag=True, help='SSL/TLS only')
 @click.option('-T', '--timeout', default=10.0, type=float, help='Timeout per request (seconds)')
 def web(url: str, output: Optional[str], file: Optional[str], ssl_only: bool, timeout: float):
+    """Grade a website's TLS certificate, security headers and cookies (A+ to F)."""
     Colors.print_banner()
     click.echo(f"{Colors.INFO}Analyzing {Colors.BOLD}{url}{Colors.RESET}\n")
 
@@ -97,6 +99,7 @@ def web(url: str, output: Optional[str], file: Optional[str], ssl_only: bool, ti
 @click.option('-o', '--output', type=click.Choice(['json', 'csv', 'txt']))
 @click.option('-f', '--file', help='Output file')
 def subdomain(domain: str, wordlist: Optional[str], threads: int, crtsh: bool, timeout: float, output: Optional[str], file: Optional[str]):
+    """Find subdomains with a wordlist (and optionally crt.sh), filtering wildcard DNS."""
     Colors.print_banner()
     click.echo(f"{Colors.INFO}Enumerating {Colors.BOLD}{domain}{Colors.RESET}\n")
 
