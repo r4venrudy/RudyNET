@@ -18,6 +18,7 @@ UDP_PROBES = {
 
 
 def service_name(port: int, proto: str = "tcp") -> str:
+    """Well-known service for a port from the system services database, or 'unknown'."""
     try:
         return socket.getservbyport(port, proto)
     except OSError:
@@ -25,6 +26,7 @@ def service_name(port: int, proto: str = "tcp") -> str:
 
 
 def clean_banner(raw: bytes, limit: int = 120) -> str:
+    """First line of a service banner, decoded leniently and cut to `limit` characters."""
     text = raw.decode("utf-8", errors="replace").strip()
     first = text.splitlines()[0] if text else ""
     return first[:limit]
@@ -80,6 +82,7 @@ class PortScanner:
                     "service": service_name(port, "udp"), "bytes": len(data)}
 
     def scan(self, ports: List[int], scan_type: str = "tcp") -> Dict[str, Any]:
+        """Scan `ports` with 'tcp', 'udp' or 'both' and return only the open ones, sorted."""
         jobs = []
         if scan_type in ("tcp", "both"):
             jobs += [(self._tcp, p) for p in ports]
