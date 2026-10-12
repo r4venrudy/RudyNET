@@ -44,6 +44,22 @@ python rudynet.py subdomain --domain example.com --crtsh --output json --file su
 python -m unittest discover -s tests -v
 ```
 
+## Options
+
+| Command | Option | Default | Meaning |
+| :--- | :--- | :--- | :--- |
+| `scan` | `-p, --ports` | `1-1000` | Range (`20-25`) or list (`80,443`); lists are deduplicated |
+| `scan` | `-s, --scan-type` | `tcp` | `tcp`, `udp` or `both` |
+| `scan` | `-T, --timeout` | `1.0` | Seconds per connection |
+| `scan` | `--banner` | off | Read service greetings, HTTP `HEAD` for silent ports |
+| `web` | `--ssl-only` | off | Only inspect the TLS certificate |
+| `web` | `-T, --timeout` | `10.0` | Seconds per request |
+| `subdomain` | `-w, --wordlist` | bundled list | One label per line, `#` comments allowed |
+| `subdomain` | `-t, --threads` | `50` | Parallel DNS lookups |
+| `subdomain` | `-T, --timeout` | `3.0` | DNS timeout per name |
+| `subdomain` | `--crtsh` | off | Add names from certificate-transparency logs |
+| all | `-o, --output` / `-f, --file` | none | `json`, `csv` or `txt`; with only `-f`, the extension picks the format |
+
 ## Implementation notes
 
 - The entry point is `rudynet.py`; `rudysec.py` is kept as an alias that runs the same CLI.
