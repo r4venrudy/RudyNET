@@ -81,8 +81,11 @@ def check_referrer_policy(value: str) -> Tuple[bool, str]:
     return effective not in ("", "unsafe-url", "no-referrer-when-downgrade"), value
 
 
-def evaluate_headers(headers: Dict[str, str]) -> Dict[str, Any]:
-    """Grade a response's headers. `headers` must be a case-insensitive mapping."""
+def evaluate_headers(headers: Dict[str, str], https: bool = True) -> Dict[str, Any]:
+    """Grade a response's headers. `headers` must be a case-insensitive mapping.
+
+    Browsers ignore Strict-Transport-Security on plain HTTP responses, so it earns nothing there.
+    """
     checks: List[Dict[str, Any]] = []
     deductions = 0
     csp = headers.get("Content-Security-Policy")
@@ -97,7 +100,7 @@ def evaluate_headers(headers: Dict[str, str]) -> Dict[str, Any]:
             deductions += weight
             continue
         if header == "Strict-Transport-Security":
-            ok, detail = check_hsts(value)
+            ok, detail = check_hsts(value) if https else (False, "ignored over plain HTTP")
         elif header == "Content-Security-Policy":
             ok, detail = check_csp(value)
         elif header == "X-Content-Type-Options":
@@ -199,7 +202,7 @@ class WebSecurity:
             return {"error": f"HTTP request failed: {e}"}
 
         final_https = resp.url.startswith("https://")
-        result = evaluate_headers(resp.headers)
+        result = evaluate_headers(resp.headers, final_https)
         cookies = resp.raw.headers.getlist("Set-Cookie") if hasattr(resp.raw.headers, "getlist") else []
         result.update({
             "final_url": resp.url,
