@@ -46,7 +46,7 @@ def cli():
 
 @cli.command()
 @click.option('-t', '--target', required=True, help='Target IP or hostname')
-@click.option('-p', '--ports', default='1-1000', help='Ports: 1-1000 or 80,443,8080')
+@click.option('-p', '--ports', default='1-1000', help="Ports: 1-1000, 80,443 or 22,80-90")
 @click.option('-T', '--timeout', default=1.0, type=click.FloatRange(0, min_open=True), help='Timeout (seconds)')
 @click.option('-s', '--scan-type', default='tcp', type=click.Choice(['tcp', 'udp', 'both']))
 @click.option('-o', '--output', type=click.Choice(['json', 'csv', 'txt']))
@@ -135,26 +135,28 @@ def subdomain(domain: str, wordlist: Optional[str], threads: int, crtsh: bool, t
         sys.exit(1)
 
 def parse_ports(ports_str: str) -> List[int]:
+    """Parse "80", "20-25", "80,443" or a mix such as "22,80-90" into sorted unique ports."""
+    ports = set()
     try:
-        if '-' in ports_str:
-            parts = ports_str.split('-')
-            if len(parts) != 2:
+        for part in ports_str.split(','):
+            part = part.strip()
+            if not part:
+                continue
+            bounds = part.split('-')
+            if len(bounds) == 1:
+                start = end = int(bounds[0])
+            elif len(bounds) == 2:
+                start, end = int(bounds[0]), int(bounds[1])
+            else:
                 raise ValueError
-            start, end = int(parts[0]), int(parts[1])
             if start > end or start < 1 or end > 65535:
                 raise ValueError
-            return list(range(start, end + 1))
-        if ',' in ports_str:
-            ports = sorted({int(p.strip()) for p in ports_str.split(',') if p.strip()})
-            if any(p < 1 or p > 65535 for p in ports):
-                raise ValueError
-            return ports
-        port = int(ports_str)
-        if port < 1 or port > 65535:
-            raise ValueError
-        return [port]
-    except:
+            ports.update(range(start, end + 1))
+    except ValueError:
         raise ValueError(f"Invalid port format: {ports_str}")
+    if not ports:
+        raise ValueError(f"Invalid port format: {ports_str}")
+    return sorted(ports)
 
 if __name__ == '__main__':
     cli()

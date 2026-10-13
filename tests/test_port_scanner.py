@@ -59,6 +59,14 @@ class ParsePortsTests(unittest.TestCase):
         self.assertEqual(parse_ports("80, 443"), [80, 443])
         self.assertEqual(parse_ports("8080"), [8080])
 
+    def test_mixed_list_and_ranges(self):
+        self.assertEqual(parse_ports("22,80-82,81"), [22, 80, 81, 82])
+
+    def test_rejects_empty(self):
+        for bad in ("", ",", " , "):
+            with self.assertRaises(ValueError):
+                parse_ports(bad)
+
     def test_rejects_out_of_range(self):
         with self.assertRaises(ValueError):
             parse_ports("0-70000")
