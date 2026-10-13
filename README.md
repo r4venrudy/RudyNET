@@ -55,6 +55,7 @@ python -m unittest discover -s tests -v
 | `scan` | `-w, --workers` | `200` | Parallel connections (1-1000); lower it for fragile hosts or slow links |
 | `web` | `--ssl-only` | off | Only inspect the TLS certificate |
 | `web` | `-T, --timeout` | `10.0` | Seconds per request |
+| `subdomain` | `-d, --domain` | required | A domain or a URL; the scheme, port and path are stripped |
 | `subdomain` | `-w, --wordlist` | bundled list | One label per line, `#` comments allowed |
 | `subdomain` | `-t, --threads` | `50` | Parallel DNS lookups |
 | `subdomain` | `-T, --timeout` | `3.0` | DNS timeout per name |
@@ -65,6 +66,7 @@ python -m unittest discover -s tests -v
 
 - The entry point is `rudynet.py`; `rudysec.py` is kept as an alias that runs the same CLI.
 - UDP timeouts are ambiguous and are omitted from positive results; a lack of response does not establish that a port is closed. Port resolution currently uses IPv4.
+- Header grading follows browser behavior: HSTS earns nothing when the final page is plain HTTP, a comma list in `Referrer-Policy` is graded by its last value, and a header sent twice with the same value (common behind proxies) is accepted.
 - Web grades are hardening heuristics. TLS metadata is inspected for the input host, while HTTP requests can follow redirects to another host; assess the final target independently when needed.
 - Subdomain discovery generates DNS queries and port checks initiate network connections. Scope targets explicitly and use only systems you own or are authorized to assess.
 
@@ -72,11 +74,12 @@ python -m unittest discover -s tests -v
 
 ```text
 rudynet.py                 Main Click CLI
-modules/port_scanner.py     TCP/UDP checks and banners
-modules/web_security.py     TLS and HTTP heuristics
-modules/subdomain_enum.py   DNS and certificate-transparency discovery
+modules/port_scanner.py    TCP/UDP checks and banners
+modules/web_security.py    TLS and HTTP heuristics
+modules/subdomain_enum.py  DNS and certificate-transparency discovery
 data/subdomains.txt        Default wordlist
-tests/                    Unit tests
+utils/                     Colors and JSON/CSV/TXT export
+tests/                     Unit tests
 ```
 
 ## GitHub package
