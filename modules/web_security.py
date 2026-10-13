@@ -108,7 +108,7 @@ def evaluate_headers(headers: Dict[str, str], https: bool = True) -> Dict[str, A
         elif header == "Content-Security-Policy":
             ok, detail = check_csp(value)
         elif header == "X-Content-Type-Options":
-            ok, detail = (value.lower() == "nosniff", value)
+            ok, detail = ({v.strip().lower() for v in value.split(",")} == {"nosniff"}, value)
         elif header == "X-Frame-Options":
             ok, detail = check_frame_options(value)
         elif header == "Referrer-Policy":
