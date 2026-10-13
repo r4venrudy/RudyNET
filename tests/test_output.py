@@ -21,6 +21,14 @@ class ExportTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             render(DATA, "xml")
 
+    def test_unknown_extension_falls_back_to_json(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "report.log")
+            with redirect_stdout(StringIO()):
+                export(DATA, None, path)
+            with open(path, encoding="utf-8") as fh:
+                self.assertEqual(json.load(fh), DATA)
+
     def test_format_inferred_from_file_extension(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "report.csv")

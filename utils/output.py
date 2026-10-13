@@ -38,10 +38,12 @@ def render(results: Any, fmt: str) -> str:
 
 
 def export(results: Any, fmt: Optional[str], file: Optional[str]) -> None:
-    """Write results to `file` (format from -o or the file extension) or print them; no-op without either."""
+    """Write results to `file` (format from -o, else the file extension, else JSON) or print them; no-op without either."""
     if not fmt:
         if file:
-            fmt = file.rsplit(".", 1)[-1].lower() if "." in file else "json"
+            ext = file.rsplit(".", 1)[-1].lower() if "." in file else ""
+            # report.out or report.log would otherwise fail after the scan already ran
+            fmt = ext if ext in ("json", "csv", "txt") else "json"
         else:
             return
     text = render(results, fmt)

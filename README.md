@@ -59,7 +59,7 @@ python -m unittest discover -s tests -v
 | `subdomain` | `-t, --threads` | `50` | Parallel DNS lookups |
 | `subdomain` | `-T, --timeout` | `3.0` | DNS timeout per name |
 | `subdomain` | `--crtsh` | off | Add names from certificate-transparency logs |
-| all | `-o, --output` / `-f, --file` | none | `json`, `csv` or `txt`; with only `-f`, the extension picks the format |
+| all | `-o, --output` / `-f, --file` | none | `json`, `csv` or `txt`; with only `-f`, the extension picks the format (JSON if unrecognized) |
 
 ## Implementation notes
 
