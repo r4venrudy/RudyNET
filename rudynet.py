@@ -109,7 +109,11 @@ def subdomain(domain: str, wordlist: Optional[str], threads: int, crtsh: bool, t
     click.echo(f"{Colors.INFO}Enumerating {Colors.BOLD}{domain}{Colors.RESET}\n")
 
     SubdomainEnum = load_module('subdomain_enum', 'SubdomainEnum')
-    sub_enum = SubdomainEnum(domain, wordlist, threads, timeout)
+    try:
+        sub_enum = SubdomainEnum(domain, wordlist, threads, timeout)
+    except OSError as e:
+        click.echo(f"{Colors.ERROR}Error: cannot read wordlist: {e}{Colors.RESET}")
+        sys.exit(1)
 
     try:
         extra = []
