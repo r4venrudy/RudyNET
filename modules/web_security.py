@@ -74,6 +74,13 @@ def check_frame_options(value: str) -> Tuple[bool, str]:
     return False, f"unexpected value '{value}'"
 
 
+def check_referrer_policy(value: str) -> Tuple[bool, str]:
+    """Browsers apply the last policy they understand in a comma list, so grade that one."""
+    policies = [p.strip().lower() for p in value.split(",") if p.strip()]
+    effective = policies[-1] if policies else ""
+    return effective not in ("", "unsafe-url", "no-referrer-when-downgrade"), value
+
+
 def evaluate_headers(headers: Dict[str, str]) -> Dict[str, Any]:
     """Grade a response's headers. `headers` must be a case-insensitive mapping."""
     checks: List[Dict[str, Any]] = []
@@ -98,8 +105,7 @@ def evaluate_headers(headers: Dict[str, str]) -> Dict[str, Any]:
         elif header == "X-Frame-Options":
             ok, detail = check_frame_options(value)
         elif header == "Referrer-Policy":
-            ok = value.lower() not in ("unsafe-url", "no-referrer-when-downgrade")
-            detail = value
+            ok, detail = check_referrer_policy(value)
         else:
             ok, detail = True, "present"
         if not ok:

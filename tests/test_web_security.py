@@ -7,7 +7,7 @@ from requests.structures import CaseInsensitiveDict
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from modules.web_security import (  # noqa: E402
-    check_csp, check_frame_options, check_hsts, evaluate_cookies, evaluate_headers, grade, normalize_url,
+    check_csp, check_frame_options, check_referrer_policy, check_hsts, evaluate_cookies, evaluate_headers, grade, normalize_url,
 )
 from utils.output import render  # noqa: E402
 
@@ -71,6 +71,11 @@ class FrameAndReferrerTests(unittest.TestCase):
         self.assertEqual(check_frame_options("deny"), (True, "DENY"))
         self.assertEqual(check_frame_options("sameorigin"), (True, "SAMEORIGIN"))
         self.assertFalse(check_frame_options("ALLOW-FROM https://x")[0])
+
+    def test_referrer_policy_list_uses_last_value(self):
+        self.assertFalse(check_referrer_policy("strict-origin, unsafe-url")[0])
+        self.assertTrue(check_referrer_policy("unsafe-url, strict-origin-when-cross-origin")[0])
+        self.assertFalse(check_referrer_policy(" , ")[0])
 
     def test_unsafe_referrer_policy_is_penalised(self):
         headers = CaseInsensitiveDict({**STRONG, "Referrer-Policy": "unsafe-url"})
