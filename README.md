@@ -52,6 +52,7 @@ python -m unittest discover -s tests -v
 | `scan` | `-s, --scan-type` | `tcp` | `tcp`, `udp` or `both` |
 | `scan` | `-T, --timeout` | `1.0` | Seconds per connection |
 | `scan` | `--banner` | off | Read service greetings, HTTP `HEAD` for silent ports |
+| `scan` | `-w, --workers` | `200` | Parallel connections (1-1000); lower it for fragile hosts or slow links |
 | `web` | `--ssl-only` | off | Only inspect the TLS certificate |
 | `web` | `-T, --timeout` | `10.0` | Seconds per request |
 | `subdomain` | `-w, --wordlist` | bundled list | One label per line, `#` comments allowed |
