@@ -72,6 +72,10 @@ class FrameAndReferrerTests(unittest.TestCase):
         self.assertEqual(check_frame_options("sameorigin"), (True, "SAMEORIGIN"))
         self.assertFalse(check_frame_options("ALLOW-FROM https://x")[0])
 
+    def test_frame_options_sent_twice(self):
+        self.assertEqual(check_frame_options("SAMEORIGIN, sameorigin"), (True, "SAMEORIGIN"))
+        self.assertFalse(check_frame_options("DENY, SAMEORIGIN")[0])
+
     def test_hsts_over_plain_http_does_not_count(self):
         result = evaluate_headers(CaseInsensitiveDict(STRONG), https=False)
         hsts = next(c for c in result["checks"] if c["header"] == "Strict-Transport-Security")

@@ -68,9 +68,13 @@ def check_csp(value: str) -> Tuple[bool, str]:
 
 
 def check_frame_options(value: str) -> Tuple[bool, str]:
-    """Only DENY and SAMEORIGIN are valid X-Frame-Options values."""
-    if value.upper() in ("DENY", "SAMEORIGIN"):
-        return True, value.upper()
+    """Only DENY and SAMEORIGIN are valid X-Frame-Options values.
+
+    A header sent twice arrives joined ("SAMEORIGIN, SAMEORIGIN"); browsers accept that when every copy agrees.
+    """
+    values = {v.strip().upper() for v in value.split(",")}
+    if len(values) == 1 and values <= {"DENY", "SAMEORIGIN"}:
+        return True, values.pop()
     return False, f"unexpected value '{value}'"
 
 
