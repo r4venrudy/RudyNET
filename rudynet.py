@@ -32,7 +32,7 @@ from utils.output import OutputFormatter
 
 def load_module(module: str, cls: str):
     # Modules are imported per command so one missing optional dependency
-    # (e.g. scapy for `monitor`) doesn't break every other command.
+    # (e.g. dnspython for `subdomain`) doesn't break every other command.
     try:
         return getattr(importlib.import_module(f"modules.{module}"), cls)
     except ImportError as e:
