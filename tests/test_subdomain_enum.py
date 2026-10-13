@@ -6,7 +6,7 @@ from unittest import mock
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from modules import subdomain_enum  # noqa: E402
-from modules.subdomain_enum import SubdomainEnum, crtsh_names, load_wordlist  # noqa: E402
+from modules.subdomain_enum import SubdomainEnum, crtsh_names, load_wordlist, normalize_domain  # noqa: E402
 
 
 class FakeResolverEnum(SubdomainEnum):
@@ -24,6 +24,13 @@ class FakeResolverEnum(SubdomainEnum):
 
 
 class SubdomainTests(unittest.TestCase):
+    def test_normalize_domain_strips_url_parts(self):
+        self.assertEqual(normalize_domain("https://Example.com:8443/login"), "example.com")
+        self.assertEqual(normalize_domain(" example.com. "), "example.com")
+        for bad in ("", "localhost", "https:///"):
+            with self.assertRaises(ValueError):
+                normalize_domain(bad)
+
     def test_default_wordlist_loads(self):
         words = load_wordlist(None)
         self.assertIn("www", words)

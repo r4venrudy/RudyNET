@@ -33,9 +33,20 @@ def crtsh_names(domain: str, timeout: float = 20.0) -> List[str]:
     return sorted(names)
 
 
+def normalize_domain(value: str) -> str:
+    """Turn "https://Example.com/path" or "example.com." into "example.com"."""
+    domain = value.strip().lower()
+    if "://" in domain:
+        domain = domain.split("://", 1)[1]
+    domain = domain.split("/", 1)[0].split(":", 1)[0].rstrip(".")
+    if not domain or "." not in domain:
+        raise ValueError(f"Invalid domain: {value}")
+    return domain
+
+
 class SubdomainEnum:
     def __init__(self, domain: str, wordlist: Optional[str] = None, threads: int = 50, timeout: float = 3.0):
-        self.domain = domain.strip().lower().rstrip(".")
+        self.domain = normalize_domain(domain)
         self.words = load_wordlist(wordlist)
         self.threads = threads
         self.resolver = dns.resolver.Resolver()

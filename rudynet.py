@@ -115,6 +115,9 @@ def subdomain(domain: str, wordlist: Optional[str], threads: int, crtsh: bool, t
     except OSError as e:
         click.echo(f"{Colors.ERROR}Error: cannot read wordlist: {e}{Colors.RESET}")
         sys.exit(1)
+    except ValueError as e:
+        click.echo(f"{Colors.ERROR}Error: {e}{Colors.RESET}")
+        sys.exit(1)
 
     try:
         extra = []
