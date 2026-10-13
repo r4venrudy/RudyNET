@@ -47,7 +47,7 @@ def cli():
 @cli.command()
 @click.option('-t', '--target', required=True, help='Target IP or hostname')
 @click.option('-p', '--ports', default='1-1000', help='Ports: 1-1000 or 80,443,8080')
-@click.option('-T', '--timeout', default=1.0, type=float, help='Timeout (seconds)')
+@click.option('-T', '--timeout', default=1.0, type=click.FloatRange(0, min_open=True), help='Timeout (seconds)')
 @click.option('-s', '--scan-type', default='tcp', type=click.Choice(['tcp', 'udp', 'both']))
 @click.option('-o', '--output', type=click.Choice(['json', 'csv', 'txt']))
 @click.option('-f', '--file', help='Output file')
@@ -80,7 +80,7 @@ def scan(target: str, ports: str, timeout: float, scan_type: str, output: Option
 @click.option('-o', '--output', type=click.Choice(['json', 'csv', 'txt']))
 @click.option('-f', '--file', help='Output file')
 @click.option('--ssl-only', is_flag=True, help='SSL/TLS only')
-@click.option('-T', '--timeout', default=10.0, type=float, help='Timeout per request (seconds)')
+@click.option('-T', '--timeout', default=10.0, type=click.FloatRange(0, min_open=True), help='Timeout per request (seconds)')
 def web(url: str, output: Optional[str], file: Optional[str], ssl_only: bool, timeout: float):
     """Grade a website's TLS certificate, security headers and cookies (A+ to F)."""
     Colors.print_banner()
@@ -98,9 +98,9 @@ def web(url: str, output: Optional[str], file: Optional[str], ssl_only: bool, ti
 @cli.command()
 @click.option('-d', '--domain', required=True, help='Target domain')
 @click.option('-w', '--wordlist', help='Wordlist file')
-@click.option('-t', '--threads', default=50, type=int, help='Threads')
+@click.option('-t', '--threads', default=50, type=click.IntRange(1, 500), help='Threads (1-500)')
 @click.option('--crtsh', is_flag=True, help='Also pull names from certificate-transparency logs (crt.sh)')
-@click.option('-T', '--timeout', default=3.0, type=float, help='DNS timeout per name (seconds)')
+@click.option('-T', '--timeout', default=3.0, type=click.FloatRange(0, min_open=True), help='DNS timeout per name (seconds)')
 @click.option('-o', '--output', type=click.Choice(['json', 'csv', 'txt']))
 @click.option('-f', '--file', help='Output file')
 def subdomain(domain: str, wordlist: Optional[str], threads: int, crtsh: bool, timeout: float, output: Optional[str], file: Optional[str]):
