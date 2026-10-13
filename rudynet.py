@@ -23,6 +23,7 @@ except:
     raven_fail()
 
 import click
+import socket
 from typing import List, Optional
 import importlib
 from utils.colors import Colors
@@ -57,12 +58,16 @@ def scan(target: str, ports: str, timeout: float, scan_type: str, output: Option
     click.echo(f"{Colors.INFO}Scanning {Colors.BOLD}{target}{Colors.RESET}\n")
 
     PortScanner = load_module('port_scanner', 'PortScanner')
-    scanner = PortScanner(target, timeout, banner)
 
     try:
         port_list = parse_ports(ports)
+        # Resolving the host can fail, so it belongs inside the error handling
+        scanner = PortScanner(target, timeout, banner)
         results = scanner.scan(port_list, scan_type)
         OutputFormatter.display_scan_results(results, output, file)
+    except socket.gaierror:
+        click.echo(f"{Colors.ERROR}Error: could not resolve host '{target}'{Colors.RESET}")
+        sys.exit(1)
     except KeyboardInterrupt:
         click.echo(f"\n{Colors.WARNING}Interrupted{Colors.RESET}")
         sys.exit(1)
