@@ -56,6 +56,7 @@ python -m unittest discover -s tests -v
 | `scan` | `-w, --workers` | `200` | Parallel connections (1-1000); lower it for fragile hosts or slow links |
 | `web` | `--ssl-only` | off | Only inspect the TLS certificate |
 | `web` | `-T, --timeout` | `10.0` | Seconds per request |
+| `web` | `--fail-under` | none | Exit with status 2 when the score is below this value, for CI checks |
 | `subdomain` | `-d, --domain` | required | A domain or a URL; the scheme, port and path are stripped |
 | `subdomain` | `-w, --wordlist` | bundled list | One label per line, `#` comments allowed |
 | `subdomain` | `-t, --threads` | `50` | Parallel DNS lookups |

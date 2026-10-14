@@ -83,7 +83,8 @@ def scan(target: str, ports: str, timeout: float, scan_type: str, output: Option
 @click.option('-f', '--file', help='Output file')
 @click.option('--ssl-only', is_flag=True, help='SSL/TLS only')
 @click.option('-T', '--timeout', default=10.0, type=click.FloatRange(0, min_open=True), help='Timeout per request (seconds)')
-def web(url: str, output: Optional[str], file: Optional[str], ssl_only: bool, timeout: float):
+@click.option('--fail-under', type=click.IntRange(0, 100), help='Exit with status 2 when the score is below this (for CI)')
+def web(url: str, output: Optional[str], file: Optional[str], ssl_only: bool, timeout: float, fail_under: Optional[int]):
     """Grade a website's TLS certificate, security headers and cookies (A+ to F)."""
     with human_view(output, file):
         Colors.print_banner()
@@ -94,9 +95,16 @@ def web(url: str, output: Optional[str], file: Optional[str], ssl_only: bool, ti
         web_sec = WebSecurity(url, timeout)
         results = web_sec.check_ssl_only() if ssl_only else web_sec.full_analysis()
         OutputFormatter.display_web_results(results, output, file)
+    except KeyboardInterrupt:
+        click.echo(f"\n{Colors.WARNING}Interrupted{Colors.RESET}")
+        sys.exit(1)
     except Exception as e:
         click.echo(f"{Colors.ERROR}Error: {e}{Colors.RESET}")
         sys.exit(1)
+    if fail_under is not None and results["score"] < fail_under:
+        click.echo(f"{Colors.ERROR}Score {results['score']} is below {fail_under}{Colors.RESET}", err=True)
+        sys.exit(2)
+
 
 @cli.command()
 @click.option('-d', '--domain', required=True, help='Target domain')
