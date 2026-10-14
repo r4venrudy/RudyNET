@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 
 import requests
 
-USER_AGENT = "RudyNET/1.1 (+https://github.com/r4venrudy/RudyNET)"
+USER_AGENT = "RudyNET/1.2 (+https://github.com/r4venrudy/RudyNET)"
 
 # header -> points deducted when missing
 HEADER_WEIGHTS = {

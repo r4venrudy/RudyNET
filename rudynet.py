@@ -40,7 +40,7 @@ def load_module(module: str, cls: str):
         sys.exit(1)
 
 @click.group()
-@click.version_option(version='1.1.0', prog_name='RudyNET')
+@click.version_option(version='1.2.0', prog_name='RudyNET')
 def cli():
     """RudyNET: port scanning, web security grading and subdomain discovery for systems you are authorized to test."""
 
