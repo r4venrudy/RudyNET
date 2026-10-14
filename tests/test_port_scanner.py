@@ -10,9 +10,9 @@ from modules.port_scanner import PortScanner, clean_banner  # noqa: E402
 from rudynet import parse_ports  # noqa: E402
 
 
-def _greeting_server(greeting: bytes):
-    srv = socket.socket()
-    srv.bind(("127.0.0.1", 0))
+def _greeting_server(greeting: bytes, family=socket.AF_INET, host="127.0.0.1"):
+    srv = socket.socket(family)
+    srv.bind((host, 0))
     srv.listen(5)
 
     def serve():
@@ -44,6 +44,20 @@ class PortScannerTests(unittest.TestCase):
             srv.close()
         self.assertEqual([r["port"] for r in result["open"]], [port])
         self.assertEqual(result["open"][0]["banner"], "SSH-2.0-OpenSSH_9.6")
+
+    @unittest.skipUnless(socket.has_ipv6, "no IPv6 support")
+    def test_ipv6_target(self):
+        try:
+            srv = _greeting_server(b"hello\r\n", socket.AF_INET6, "::1")
+        except OSError:
+            self.skipTest("::1 is not available")
+        port = srv.getsockname()[1]
+        try:
+            result = PortScanner("::1", timeout=0.5, banner=True).scan([port])
+        finally:
+            srv.close()
+        self.assertEqual(result["ip"], "::1")
+        self.assertEqual([r["port"] for r in result["open"]], [port])
 
     def test_closed_ports_are_not_reported(self):
         result = PortScanner("127.0.0.1", timeout=0.3).scan([_free_port()])

@@ -38,7 +38,11 @@ class PortScanner:
         self.timeout = timeout
         self.banner = banner
         self.workers = workers
-        self.ip = socket.gethostbyname(target)
+        # getaddrinfo also returns IPv6 addresses (gethostbyname only knew IPv4); prefer IPv4 when a host has both
+        infos = socket.getaddrinfo(target.strip("[]"), None, type=socket.SOCK_STREAM)
+        family, _, _, _, sockaddr = sorted(infos, key=lambda i: i[0] != socket.AF_INET)[0]
+        self.family = family
+        self.ip = sockaddr[0]
 
     def _tcp(self, port: int) -> Optional[Dict[str, Any]]:
         try:
@@ -68,7 +72,7 @@ class PortScanner:
             return ""
 
     def _udp(self, port: int) -> Optional[Dict[str, Any]]:
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+        with socket.socket(self.family, socket.SOCK_DGRAM) as sock:
             sock.settimeout(self.timeout)
             try:
                 sock.sendto(UDP_PROBES.get(port, b"\x00"), (self.ip, port))

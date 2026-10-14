@@ -65,7 +65,7 @@ python -m unittest discover -s tests -v
 ## Implementation notes
 
 - The entry point is `rudynet.py`; `rudysec.py` is kept as an alias that runs the same CLI.
-- UDP timeouts are ambiguous and are omitted from positive results; a lack of response does not establish that a port is closed. Port resolution currently uses IPv4.
+- UDP timeouts are ambiguous and are omitted from positive results; a lack of response does not establish that a port is closed. IPv6 targets (for example `::1`) work too; a host with both address types is scanned over IPv4.
 - Header grading follows browser behavior: HSTS earns nothing when the final page is plain HTTP, a comma list in `Referrer-Policy` is graded by its last value, and a header sent twice with the same value (common behind proxies) is accepted.
 - Web grades are hardening heuristics. TLS metadata is inspected for the input host, while HTTP requests can follow redirects to another host; assess the final target independently when needed.
 - Subdomain discovery generates DNS queries and port checks initiate network connections. Scope targets explicitly and use only systems you own or are authorized to assess.
