@@ -55,6 +55,11 @@ class HeaderTests(unittest.TestCase):
         result = evaluate_headers(CaseInsensitiveDict({**STRONG, "X-Powered-By": "PHP/7.4"}))
         self.assertEqual(result["leaks"], ["X-Powered-By: PHP/7.4"])
 
+    def test_server_header_counts_only_with_a_version(self):
+        self.assertEqual(evaluate_headers(CaseInsensitiveDict({**STRONG, "Server": "cloudflare"}))["leaks"], [])
+        self.assertEqual(evaluate_headers(CaseInsensitiveDict({**STRONG, "Server": "nginx/1.18.0"}))["leaks"],
+                         ["Server: nginx/1.18.0"])
+
     def test_short_hsts_fails(self):
         ok, detail = check_hsts("max-age=3600")
         self.assertFalse(ok)

@@ -123,7 +123,9 @@ def evaluate_headers(headers: Dict[str, str], https: bool = True) -> Dict[str, A
             deductions += weight // 2
         checks.append({"header": header, "ok": ok, "detail": detail})
 
-    leaks = [f"{h}: {headers[h]}" for h in LEAKY_HEADERS if headers.get(h)]
+    # "Server: nginx" or "Server: cloudflare" says little; a version number ("nginx/1.18.0") is the leak
+    leaks = [f"{h}: {headers[h]}" for h in LEAKY_HEADERS
+             if headers.get(h) and (h != "Server" or re.search(r"\d", headers[h]))]
     deductions += 5 * len(leaks)
 
     return {"checks": checks, "leaks": leaks, "deductions": deductions}
