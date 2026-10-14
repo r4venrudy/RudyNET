@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### scan
+- `--banner` reads banners over TLS on ports 443, 465, 993, 995 and 8443
+
+### web
+- A `Server` header only counts as an information leak when it carries a version number
+- HSTS details say when a `preload` flag does not meet the preload list requirements
+
 ## 1.2.0
 
 ### scan
