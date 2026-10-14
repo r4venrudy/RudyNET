@@ -143,6 +143,16 @@ def evaluate_cookies(set_cookie_values: List[str], https: bool) -> List[str]:
     return issues
 
 
+def collect_set_cookies(resp: Any) -> List[str]:
+    """Set-Cookie headers from every hop, since login and tracking cookies are often set on a redirect."""
+    cookies: List[str] = []
+    for r in list(getattr(resp, "history", [])) + [resp]:
+        headers = getattr(r.raw, "headers", None)
+        if headers is not None and hasattr(headers, "getlist"):
+            cookies.extend(headers.getlist("Set-Cookie"))
+    return cookies
+
+
 def grade(score: int) -> str:
     """Map a 0-100 score to A+ .. F."""
     for threshold, letter in ((95, "A+"), (85, "A"), (70, "B"), (55, "C"), (40, "D")):
@@ -207,7 +217,7 @@ class WebSecurity:
 
         final_https = resp.url.startswith("https://")
         result = evaluate_headers(resp.headers, final_https)
-        cookies = resp.raw.headers.getlist("Set-Cookie") if hasattr(resp.raw.headers, "getlist") else []
+        cookies = collect_set_cookies(resp)
         result.update({
             "final_url": resp.url,
             "status": resp.status_code,

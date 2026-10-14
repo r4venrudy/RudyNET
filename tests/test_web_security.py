@@ -7,7 +7,7 @@ from requests.structures import CaseInsensitiveDict
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from modules.web_security import (  # noqa: E402
-    check_csp, check_frame_options, check_referrer_policy, check_hsts, evaluate_cookies, evaluate_headers, grade, normalize_url,
+    check_csp, collect_set_cookies, check_frame_options, check_referrer_policy, check_hsts, evaluate_cookies, evaluate_headers, grade, normalize_url,
 )
 from utils.output import render  # noqa: E402
 
@@ -122,3 +122,23 @@ class GradeAndOutputTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class _Headers:
+    def __init__(self, cookies):
+        self.cookies = cookies
+
+    def getlist(self, name):
+        return list(self.cookies) if name == "Set-Cookie" else []
+
+
+class _Resp:
+    def __init__(self, cookies, history=()):
+        self.raw = type("Raw", (), {"headers": _Headers(cookies)})()
+        self.history = list(history)
+
+
+class RedirectCookieTests(unittest.TestCase):
+    def test_cookies_from_redirect_hops_are_included(self):
+        resp = _Resp(["final=1; Secure"], history=[_Resp(["session=abc"])])
+        self.assertEqual(collect_set_cookies(resp), ["session=abc", "final=1; Secure"])
