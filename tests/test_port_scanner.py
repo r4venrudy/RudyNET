@@ -6,7 +6,7 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from modules.port_scanner import PortScanner, clean_banner  # noqa: E402
+from modules.port_scanner import PortScanner, clean_banner, clean_target  # noqa: E402
 from rudynet import parse_ports  # noqa: E402
 
 
@@ -62,6 +62,13 @@ class PortScannerTests(unittest.TestCase):
     def test_closed_ports_are_not_reported(self):
         result = PortScanner("127.0.0.1", timeout=0.3).scan([_free_port()])
         self.assertEqual(result["open"], [])
+
+    def test_clean_target_accepts_urls(self):
+        self.assertEqual(clean_target("https://Example.com:8443/login"), "example.com")
+        self.assertEqual(clean_target(" [::1] "), "::1")
+        self.assertEqual(clean_target("10.0.0.5"), "10.0.0.5")
+        with self.assertRaises(ValueError):
+            clean_target("https://")
 
     def test_clean_banner_keeps_first_line(self):
         self.assertEqual(clean_banner(b"220 mail ESMTP\r\nmore"), "220 mail ESMTP")

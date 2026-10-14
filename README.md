@@ -48,6 +48,7 @@ python -m unittest discover -s tests -v
 
 | Command | Option | Default | Meaning |
 | :--- | :--- | :--- | :--- |
+| `scan` | `-t, --target` | required | IP, hostname or URL; IPv6 works with or without brackets |
 | `scan` | `-p, --ports` | `1-1000` | Range (`20-25`), list (`80,443`) or a mix (`22,80-90`); duplicates are dropped |
 | `scan` | `-s, --scan-type` | `tcp` | `tcp`, `udp` or `both` |
 | `scan` | `-T, --timeout` | `1.0` | Seconds per connection |

@@ -3,6 +3,7 @@
 import socket
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Optional
+from urllib.parse import urlparse
 
 # Probes that make common services answer on connect.
 PROBES = {
@@ -32,14 +33,25 @@ def clean_banner(raw: bytes, limit: int = 120) -> str:
     return first[:limit]
 
 
+def clean_target(target: str) -> str:
+    """Reduce "https://host:8443/path" or "[::1]" to the bare host so URLs can be pasted as targets."""
+    host = target.strip()
+    if "://" in host:
+        host = urlparse(host).hostname or ""
+    host = host.strip("[]")
+    if not host:
+        raise ValueError(f"Invalid target: {target}")
+    return host
+
+
 class PortScanner:
     def __init__(self, target: str, timeout: float = 1.0, banner: bool = False, workers: int = 200):
-        self.target = target
+        self.target = clean_target(target)
         self.timeout = timeout
         self.banner = banner
         self.workers = workers
         # getaddrinfo also returns IPv6 addresses (gethostbyname only knew IPv4); prefer IPv4 when a host has both
-        infos = socket.getaddrinfo(target.strip("[]"), None, type=socket.SOCK_STREAM)
+        infos = socket.getaddrinfo(self.target, None, type=socket.SOCK_STREAM)
         family, _, _, _, sockaddr = sorted(infos, key=lambda i: i[0] != socket.AF_INET)[0]
         self.family = family
         self.ip = sockaddr[0]
