@@ -60,6 +60,12 @@ class HeaderTests(unittest.TestCase):
         self.assertFalse(ok)
         self.assertIn("180 days", detail)
 
+    def test_hsts_details(self):
+        self.assertEqual(check_hsts('max-age="31536000"; includeSubDomains; preload'),
+                         (True, "max-age=31536000 (includesubdomains, preload)"))
+        self.assertEqual(check_hsts("max-age=abc"), (False, "max-age is not a number"))
+        self.assertEqual(check_hsts("includeSubDomains"), (False, "max-age=0 is below 180 days"))
+
     def test_unsafe_csp_fails(self):
         ok, detail = check_csp("default-src 'self' 'unsafe-inline'")
         self.assertFalse(ok)
