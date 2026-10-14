@@ -8,7 +8,8 @@ from io import StringIO
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from utils.output import export, render  # noqa: E402
+from utils.output import OutputFormatter, export, render  # noqa: E402
+from contextlib import redirect_stderr  # noqa: E402
 
 DATA = {"target": "example.com", "open": [{"port": 443, "service": "https"}]}
 
@@ -44,6 +45,16 @@ class ExportTests(unittest.TestCase):
         with redirect_stdout(out):
             export(DATA, None, None)
         self.assertEqual(out.getvalue(), "")
+
+
+class PipeTests(unittest.TestCase):
+    def test_json_to_stdout_is_not_mixed_with_the_human_view(self):
+        out, err = StringIO(), StringIO()
+        scan = {"target": "h", "ip": "1.2.3.4", "scanned": 1, "scan_type": "tcp", "open": []}
+        with redirect_stdout(out), redirect_stderr(err):
+            OutputFormatter.display_scan_results(scan, "json", None)
+        self.assertEqual(json.loads(out.getvalue()), scan)
+        self.assertIn("No open ports", err.getvalue())
 
 
 if __name__ == "__main__":

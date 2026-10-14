@@ -27,7 +27,7 @@ import socket
 from typing import List, Optional
 import importlib
 from utils.colors import Colors
-from utils.output import OutputFormatter
+from utils.output import OutputFormatter, human_view
 
 
 def load_module(module: str, cls: str):
@@ -55,8 +55,9 @@ def cli():
 @click.option('-w', '--workers', default=200, type=click.IntRange(1, 1000), help='Parallel connections (1-1000)')
 def scan(target: str, ports: str, timeout: float, scan_type: str, output: Optional[str], file: Optional[str], banner: bool, workers: int):
     """Scan TCP/UDP ports on a host and optionally read service banners."""
-    Colors.print_banner()
-    click.echo(f"{Colors.INFO}Scanning {Colors.BOLD}{target}{Colors.RESET}\n")
+    with human_view(output, file):
+        Colors.print_banner()
+        click.echo(f"{Colors.INFO}Scanning {Colors.BOLD}{target}{Colors.RESET}\n")
 
     PortScanner = load_module('port_scanner', 'PortScanner')
 
@@ -84,8 +85,9 @@ def scan(target: str, ports: str, timeout: float, scan_type: str, output: Option
 @click.option('-T', '--timeout', default=10.0, type=click.FloatRange(0, min_open=True), help='Timeout per request (seconds)')
 def web(url: str, output: Optional[str], file: Optional[str], ssl_only: bool, timeout: float):
     """Grade a website's TLS certificate, security headers and cookies (A+ to F)."""
-    Colors.print_banner()
-    click.echo(f"{Colors.INFO}Analyzing {Colors.BOLD}{url}{Colors.RESET}\n")
+    with human_view(output, file):
+        Colors.print_banner()
+        click.echo(f"{Colors.INFO}Analyzing {Colors.BOLD}{url}{Colors.RESET}\n")
 
     WebSecurity = load_module('web_security', 'WebSecurity')
     try:
@@ -106,8 +108,9 @@ def web(url: str, output: Optional[str], file: Optional[str], ssl_only: bool, ti
 @click.option('-f', '--file', help='Output file')
 def subdomain(domain: str, wordlist: Optional[str], threads: int, crtsh: bool, timeout: float, output: Optional[str], file: Optional[str]):
     """Find subdomains with a wordlist (and optionally crt.sh), filtering wildcard DNS."""
-    Colors.print_banner()
-    click.echo(f"{Colors.INFO}Enumerating {Colors.BOLD}{domain}{Colors.RESET}\n")
+    with human_view(output, file):
+        Colors.print_banner()
+        click.echo(f"{Colors.INFO}Enumerating {Colors.BOLD}{domain}{Colors.RESET}\n")
 
     SubdomainEnum = load_module('subdomain_enum', 'SubdomainEnum')
     try:
@@ -125,7 +128,7 @@ def subdomain(domain: str, wordlist: Optional[str], threads: int, crtsh: bool, t
             from modules.subdomain_enum import crtsh_names
             try:
                 extra = crtsh_names(sub_enum.domain)
-                click.echo(f"{Colors.INFO}crt.sh returned {len(extra)} names")
+                click.echo(f"{Colors.INFO}crt.sh returned {len(extra)} names", err=bool(output and not file))
             except Exception as e:
                 click.echo(f"{Colors.WARNING}crt.sh lookup failed, continuing with wordlist only: {e}")
         results = sub_enum.enumerate(extra)
