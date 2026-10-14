@@ -54,7 +54,11 @@ def check_hsts(value: str) -> Tuple[bool, str]:
     if max_age < 15552000:
         return False, f"max-age={max_age} is below 180 days"
     extra = [d for d in ("includesubdomains", "preload") if d in directives]
-    return True, f"max-age={max_age}" + (f" ({', '.join(extra)})" if extra else "")
+    detail = f"max-age={max_age}" + (f" ({', '.join(extra)})" if extra else "")
+    # hstspreload.org only accepts the preload flag with includeSubDomains and max-age of a year or more
+    if "preload" in directives and ("includesubdomains" not in directives or max_age < 31536000):
+        detail += "; preload requested but not eligible (needs includeSubDomains and max-age >= 1 year)"
+    return True, detail
 
 
 def check_csp(value: str) -> Tuple[bool, str]:
