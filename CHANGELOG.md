@@ -5,6 +5,7 @@
 ### scan
 - IPv6 targets, and URLs or bracketed addresses as `-t` (`https://host/path`, `[::1]`)
 - Mixed port lists such as `22,80-90`; duplicates are dropped
+- `-p top100` scans 100 commonly open TCP ports
 - `-w/--workers` to set how many connections run in parallel
 - Clear errors for hosts that do not resolve and for zero or negative timeouts
 
@@ -15,6 +16,7 @@
 
 ### subdomain
 - `-d` accepts a URL; names without a dot are rejected
+- IPv6-only names (AAAA without A) are found
 - A missing wordlist gives an error instead of a traceback
 
 ### Output
