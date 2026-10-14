@@ -67,6 +67,11 @@ class HeaderTests(unittest.TestCase):
 
 
 class FrameAndReferrerTests(unittest.TestCase):
+    def test_unsafe_inline_with_nonce_is_ignored(self):
+        self.assertEqual(check_csp("script-src 'self' 'unsafe-inline' 'nonce-abc123'"), (True, "present"))
+        self.assertEqual(check_csp("script-src 'unsafe-inline' 'sha256-xyz='"), (True, "present"))
+        self.assertFalse(check_csp("script-src 'unsafe-inline' 'nonce-abc' 'unsafe-eval'")[0])
+
     def test_frame_options_values(self):
         self.assertEqual(check_frame_options("deny"), (True, "DENY"))
         self.assertEqual(check_frame_options("sameorigin"), (True, "SAMEORIGIN"))

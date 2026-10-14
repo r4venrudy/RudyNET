@@ -1,5 +1,6 @@
 """Passive web security analysis: TLS certificate inspection and HTTP header grading."""
 
+import re
 import socket
 import ssl
 from datetime import datetime, timezone
@@ -60,6 +61,9 @@ def check_csp(value: str) -> Tuple[bool, str]:
     """Fail a CSP that allows unsafe-inline/unsafe-eval or has no default-src/script-src."""
     lowered = value.lower()
     problems = [tok for tok in ("'unsafe-inline'", "'unsafe-eval'") if tok in lowered]
+    # CSP level 2+: browsers ignore 'unsafe-inline' when the policy also has a nonce or hash
+    if "'unsafe-inline'" in problems and re.search(r"'(nonce-|sha256-|sha384-|sha512-)", lowered):
+        problems.remove("'unsafe-inline'")
     if "default-src" not in lowered and "script-src" not in lowered:
         problems.append("no default-src or script-src")
     if problems:
