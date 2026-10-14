@@ -63,6 +63,18 @@ python -m unittest discover -s tests -v
 | `subdomain` | `--crtsh` | off | Add names from certificate-transparency logs |
 | all | `-o, --output` / `-f, --file` | none | `json`, `csv` or `txt`; with only `-f`, the extension picks the format (JSON if unrecognized) |
 
+## Report format
+
+`-o json` writes the result object below; `csv` and `txt` flatten it into dotted keys such as `open.0.port` or `tls.days_left`.
+
+| Command | Top-level keys |
+| :--- | :--- |
+| `scan` | `target`, `ip`, `scanned`, `scan_type`, `open`: list of `{port, protocol, state, service}` plus `banner` (TCP with `--banner`) or `bytes` (UDP reply size) |
+| `web` | `target`, `tls` (`valid`, `protocol`, `cipher`, `subject`, `issuer`, `not_after`, `days_left`, `san_count`, `issues`, or `error`), `headers` (`checks` of `{header, ok, detail}`, `leaks`, `cookie_issues`, `final_url`, `status`, `redirects_to_https`, `deductions`, or `error`), `score`, `grade` |
+| `subdomain` | `domain`, `tried`, `wildcard` (addresses filtered as wildcard noise), `found`: list of `{subdomain, ips, cname}` |
+
+With `--ssl-only`, `web` reports only `target`, `tls`, `score` and `grade`.
+
 ## Implementation notes
 
 - The entry point is `rudynet.py`; `rudysec.py` is kept as an alias that runs the same CLI.
