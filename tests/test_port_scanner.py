@@ -1,5 +1,9 @@
 import os
+import shutil
 import socket
+import ssl
+import subprocess
+import tempfile
 import sys
 import threading
 import unittest
@@ -44,6 +48,37 @@ class PortScannerTests(unittest.TestCase):
             srv.close()
         self.assertEqual([r["port"] for r in result["open"]], [port])
         self.assertEqual(result["open"][0]["banner"], "SSH-2.0-OpenSSH_9.6")
+
+    @unittest.skipUnless(shutil.which("openssl"), "openssl is needed to make a test certificate")
+    def test_banner_over_tls(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            cert, key = os.path.join(tmp, "c.pem"), os.path.join(tmp, "k.pem")
+            subprocess.run(["openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-days", "1",
+                            "-subj", "/CN=localhost", "-keyout", key, "-out", cert],
+                           check=True, capture_output=True)
+            ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+            ctx.load_cert_chain(cert, key)
+        srv = socket.socket()
+        srv.bind(("127.0.0.1", 0))
+        srv.listen(1)
+
+        def serve():
+            try:
+                conn, _ = srv.accept()
+                with ctx.wrap_socket(conn, server_side=True) as tls:
+                    tls.sendall(b"* OK IMAP4rev1 ready\r\n")
+            except OSError:
+                pass
+
+        threading.Thread(target=serve, daemon=True).start()
+        port = srv.getsockname()[1]
+        scanner = PortScanner("127.0.0.1", timeout=2, banner=True)
+        scanner.tls_ports = {port}
+        try:
+            result = scanner.scan([port])
+        finally:
+            srv.close()
+        self.assertEqual(result["open"][0]["banner"], "* OK IMAP4rev1 ready")
 
     @unittest.skipUnless(socket.has_ipv6, "no IPv6 support")
     def test_ipv6_target(self):

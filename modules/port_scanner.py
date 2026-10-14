@@ -1,6 +1,8 @@
 """TCP connect and UDP port scanning with optional banner grabbing."""
 
+import ipaddress
 import socket
+import ssl
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
@@ -22,6 +24,9 @@ PROBES = {
     8080: b"HEAD / HTTP/1.0\r\n\r\n",
     8000: b"HEAD / HTTP/1.0\r\n\r\n",
 }
+
+# Ports that speak TLS from the first byte (HTTPS, SMTPS, IMAPS, POP3S); a plain read only gets handshake noise
+TLS_PORTS = {443, 465, 993, 995, 8443}
 
 UDP_PROBES = {
     53: b"\x12\x34\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x01",  # DNS root NS query
@@ -61,6 +66,7 @@ class PortScanner:
         self.timeout = timeout
         self.banner = banner
         self.workers = workers
+        self.tls_ports = TLS_PORTS
         # getaddrinfo also returns IPv6 addresses (gethostbyname only knew IPv4); prefer IPv4 when a host has both
         infos = socket.getaddrinfo(self.target, None, type=socket.SOCK_STREAM)
         family, _, _, _, sockaddr = sorted(infos, key=lambda i: i[0] != socket.AF_INET)[0]
@@ -81,6 +87,8 @@ class PortScanner:
     def _grab(self, sock: socket.socket, port: int) -> str:
         try:
             sock.settimeout(self.timeout)
+            if port in self.tls_ports:
+                return self._grab_tls(sock, port)
             if port in PROBES:
                 sock.sendall(PROBES[port])
                 return clean_banner(sock.recv(1024))
@@ -93,6 +101,21 @@ class PortScanner:
                 return clean_banner(sock.recv(1024))
         except OSError:
             return ""
+
+    def _grab_tls(self, sock: socket.socket, port: int) -> str:
+        # Only reading a banner, not judging the certificate (web_security does that)
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        try:
+            ipaddress.ip_address(self.target)
+            sni = None
+        except ValueError:
+            sni = self.target
+        with ctx.wrap_socket(sock, server_hostname=sni) as tls:
+            if port in (443, 8443):
+                tls.sendall(f"HEAD / HTTP/1.0\r\nHost: {self.target}\r\n\r\n".encode())
+            return clean_banner(tls.recv(1024))
 
     def _udp(self, port: int) -> Optional[Dict[str, Any]]:
         with socket.socket(self.family, socket.SOCK_DGRAM) as sock:
