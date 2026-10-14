@@ -62,11 +62,12 @@ class SubdomainEnum:
     def wildcard_ips(self) -> Set[str]:
         """Addresses a random label resolves to; hits matching these are wildcard noise."""
         probe = f"{secrets.token_hex(8)}.{self.domain}"
-        return set(self._resolve(probe))
+        return set(self._resolve(probe)) | set(self._resolve(probe, "AAAA"))
 
     def _check(self, name: str, wildcard: Set[str]) -> Optional[Dict[str, Any]]:
         """Resolve one name; drop it if it only returns wildcard addresses."""
-        ips = self._resolve(name)
+        # IPv6-only hosts have no A record, so fall back to AAAA before calling the name missing
+        ips = self._resolve(name) or self._resolve(name, "AAAA")
         if not ips or (wildcard and set(ips) <= wildcard):
             return None
         cname = self._resolve(name, "CNAME")

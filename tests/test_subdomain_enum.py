@@ -46,6 +46,11 @@ class SubdomainTests(unittest.TestCase):
             {"subdomain": "www.example.com", "ips": ["93.184.216.34"], "cname": "edge.example.net"},
         ])
 
+    def test_ipv6_only_hosts_are_found(self):
+        enum = FakeResolverEnum({("www.example.com", "AAAA"): ["2001:db8::10"]})
+        result = enum.enumerate()
+        self.assertEqual(result["found"], [{"subdomain": "www.example.com", "ips": ["2001:db8::10"], "cname": None}])
+
     def test_wildcard_answers_are_filtered(self):
         records = {f"{w}.example.com": ["10.0.0.1"] for w in ("www", "mail")}
         records["api.example.com"] = ["10.0.0.9"]
