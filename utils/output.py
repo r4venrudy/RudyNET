@@ -108,6 +108,10 @@ class OutputFormatter:
                         print(f"  {Colors.WARNING}Cookie: {issue}")
                 print()
 
+            redirect = results.get("http_redirects_to_https")
+            if redirect is False:
+                print(f"{Colors.WARNING}Plain http:// does not redirect to HTTPS{Colors.RESET}\n")
+
             sec = results.get("security_txt")
             if sec is not None:
                 if sec.get("found"):

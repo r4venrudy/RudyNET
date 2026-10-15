@@ -72,7 +72,7 @@ python -m unittest discover -s tests -v
 | Command | Top-level keys |
 | :--- | :--- |
 | `scan` | `target`, `ip`, `scanned`, `scan_type`, `open`: list of `{port, protocol, state, service}` plus `banner` (with `--banner`: TCP, and SSDP server or SNMP sysDescr over UDP) or `bytes` (UDP reply size) |
-| `web` | `target`, `tls` (`valid`, `protocol`, `cipher`, `subject`, `issuer`, `not_after`, `days_left`, `san_count`, `issues`, or `error`), `headers` (`checks` of `{header, ok, detail}`, `leaks`, `cookie_issues`, `final_url`, `status`, `redirects_to_https`, `deductions`, or `error`), `security_txt` (`found`, `contact`, `expires`), `score`, `grade` |
+| `web` | `target`, `tls` (`valid`, `protocol`, `cipher`, `subject`, `issuer`, `not_after`, `days_left`, `san_count`, `issues`, or `error`), `headers` (`checks` of `{header, ok, detail}`, `leaks`, `cookie_issues`, `final_url`, `status`, `redirects_to_https`, `deductions`, or `error`), `security_txt` (`found`, `contact`, `expires`), `http_redirects_to_https` (true/false, null when port 80 is closed or the target is http), `score`, `grade` |
 | `subdomain` | `domain`, `tried`, `wildcard` (addresses filtered as wildcard noise), `found`: list of `{subdomain, ips, cname}` |
 
 With `--ssl-only`, `web` reports only `target`, `tls`, `score` and `grade`.

@@ -286,6 +286,18 @@ class WebSecurity:
         score = 0 if not tls.get("valid") else max(0, 100 - 25 * len(tls["issues"]))
         return {"target": self.url, "tls": tls, "score": score, "grade": grade(score)}
 
+    def check_http_redirect(self) -> Any:
+        """For an https:// target, whether plain http:// on the same host ends up on HTTPS.
+        None when port 80 doesn't answer (nothing to redirect) or the target is already http://."""
+        if not self.https:
+            return None
+        try:
+            resp = requests.get(f"http://{self.host}/", timeout=self.timeout, allow_redirects=True,
+                                headers={"User-Agent": USER_AGENT})
+        except requests.RequestException:
+            return None
+        return resp.url.startswith("https://")
+
     def check_security_txt(self) -> Dict[str, Any]:
         """Whether the site publishes /.well-known/security.txt (how to report a vulnerability). Not scored."""
         url = f"{urlparse(self.url).scheme}://{urlparse(self.url).netloc}/.well-known/security.txt"
@@ -311,4 +323,5 @@ class WebSecurity:
             deductions += 15 * len(tls["issues"])
         score = max(0, 100 - deductions)
         return {"target": self.url, "tls": tls, "headers": headers, "security_txt": self.check_security_txt(),
+                "http_redirects_to_https": self.check_http_redirect(),
                 "score": score, "grade": grade(score)}

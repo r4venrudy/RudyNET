@@ -238,3 +238,17 @@ class SecurityTxtTests(unittest.TestCase):
             self.assertEqual(ws.check_security_txt(), {"found": False})
         with mock.patch.object(web_security.requests, "get", return_value=plain):
             self.assertTrue(ws.check_security_txt()["found"])
+
+
+class HttpRedirectTests(unittest.TestCase):
+    def test_http_redirect_detection(self):
+        from unittest import mock
+        from modules import web_security
+        ws = WebSecurity("https://example.com")
+        with mock.patch.object(web_security.requests, "get", return_value=mock.Mock(url="https://example.com/")):
+            self.assertIs(ws.check_http_redirect(), True)
+        with mock.patch.object(web_security.requests, "get", return_value=mock.Mock(url="http://example.com/")):
+            self.assertIs(ws.check_http_redirect(), False)
+        with mock.patch.object(web_security.requests, "get", side_effect=web_security.requests.ConnectionError()):
+            self.assertIsNone(ws.check_http_redirect())
+        self.assertIsNone(WebSecurity("http://example.com").check_http_redirect())
