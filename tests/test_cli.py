@@ -39,12 +39,20 @@ class _FakeSub:
         return {"domain": self.domain, "tried": 0, "wildcard": [], "found": []}
 
 
+def _split_runner():
+    """CliRunner with stdout and stderr captured separately (the default from Click 8.2; Python 3.9 gets 8.1)."""
+    try:
+        return CliRunner(mix_stderr=False)
+    except TypeError:
+        return CliRunner()
+
+
 class CrtshPipeTests(unittest.TestCase):
     def test_crtsh_failure_keeps_json_stdout_clean(self):
         import json
         with mock.patch.object(rudynet, "load_module", return_value=_FakeSub), \
                 mock.patch("modules.subdomain_enum.crtsh_names", side_effect=RuntimeError("down")):
-            result = CliRunner().invoke(rudynet.cli, ["subdomain", "-d", "example.com", "--crtsh", "-o", "json"])
+            result = _split_runner().invoke(rudynet.cli, ["subdomain", "-d", "example.com", "--crtsh", "-o", "json"])
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(json.loads(result.stdout)["domain"], "example.com")
         self.assertIn("crt.sh lookup failed", result.stderr)
