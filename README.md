@@ -62,6 +62,7 @@ python -m unittest discover -s tests -v
 | `subdomain` | `-w, --wordlist` | bundled list | One label per line, `#` comments allowed |
 | `subdomain` | `-t, --threads` | `50` | Parallel DNS lookups |
 | `subdomain` | `-T, --timeout` | `3.0` | DNS timeout per name |
+| `subdomain` | `-r, --resolvers` | system | Comma-separated DNS server addresses to query instead, e.g. `1.1.1.1,8.8.8.8` |
 | `subdomain` | `--crtsh` | off | Add names from certificate-transparency logs |
 | all | `-o, --output` / `-f, --file` | none | `json`, `csv` or `txt`; with only `-f`, the extension picks the format (JSON if unrecognized) |
 
@@ -73,7 +74,7 @@ python -m unittest discover -s tests -v
 | :--- | :--- |
 | `scan` | `target`, `ip`, `scanned`, `scan_type`, `open`: list of `{port, protocol, state, service}` plus `banner` (with `--banner`: TCP, and SSDP server or SNMP sysDescr over UDP) or `bytes` (UDP reply size) |
 | `web` | `target`, `tls` (`valid`, `protocol`, `cipher`, `subject`, `issuer`, `not_after`, `days_left`, `san_count`, `issues`, or `error`), `headers` (`checks` of `{header, ok, detail}`, `leaks`, `cookie_issues`, `final_url`, `status`, `redirects_to_https`, `deductions`, or `error`), `security_txt` (`found`, `contact`, `expires`), `http_redirects_to_https` (true/false, null when port 80 is closed or the target is http), `score`, `grade` |
-| `subdomain` | `domain`, `tried`, `wildcard` (addresses filtered as wildcard noise), `found`: list of `{subdomain, ips, cname}` |
+| `subdomain` | `domain`, `tried`, `wildcard` (addresses filtered as wildcard noise), `found`: list of `{subdomain, ips, cname}`, plus `dangling: true` (with empty `ips`) for possible takeovers |
 
 With `--ssl-only`, `web` reports only `target`, `tls`, `score` and `grade`.
 

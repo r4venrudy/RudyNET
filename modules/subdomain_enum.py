@@ -54,11 +54,15 @@ def normalize_domain(value: str) -> str:
 
 
 class SubdomainEnum:
-    def __init__(self, domain: str, wordlist: Optional[str] = None, threads: int = 50, timeout: float = 3.0):
+    def __init__(self, domain: str, wordlist: Optional[str] = None, threads: int = 50, timeout: float = 3.0,
+                 nameservers: Optional[List[str]] = None):
         self.domain = normalize_domain(domain)
         self.words = load_wordlist(wordlist)
         self.threads = threads
-        self.resolver = dns.resolver.Resolver()
+        # explicit resolvers help when the local one filters, caches stale answers or rate-limits
+        self.resolver = dns.resolver.Resolver(configure=not nameservers)
+        if nameservers:
+            self.resolver.nameservers = nameservers
         self.resolver.lifetime = timeout
 
     def _resolve(self, name: str, rtype: str = "A") -> List[str]:

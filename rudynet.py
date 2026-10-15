@@ -23,6 +23,7 @@ except:
     raven_fail()
 
 import click
+import ipaddress
 import socket
 from typing import List, Optional
 import importlib
@@ -113,9 +114,10 @@ def web(url: str, output: Optional[str], file: Optional[str], ssl_only: bool, ti
 @click.option('-t', '--threads', default=50, type=click.IntRange(1, 500), help='Threads (1-500)')
 @click.option('--crtsh', is_flag=True, help='Also pull names from certificate-transparency logs (crt.sh)')
 @click.option('-T', '--timeout', default=3.0, type=click.FloatRange(0, min_open=True), help='DNS timeout per name (seconds)')
+@click.option('-r', '--resolvers', help='Comma-separated DNS servers to query instead of the system ones, e.g. 1.1.1.1,8.8.8.8')
 @click.option('-o', '--output', type=click.Choice(['json', 'csv', 'txt']))
 @click.option('-f', '--file', help='Output file')
-def subdomain(domain: str, wordlist: Optional[str], threads: int, crtsh: bool, timeout: float, output: Optional[str], file: Optional[str]):
+def subdomain(domain: str, wordlist: Optional[str], threads: int, crtsh: bool, timeout: float, resolvers: Optional[str], output: Optional[str], file: Optional[str]):
     """Find subdomains with a wordlist (and optionally crt.sh), filtering wildcard DNS."""
     with human_view(output, file):
         Colors.print_banner()
@@ -123,7 +125,8 @@ def subdomain(domain: str, wordlist: Optional[str], threads: int, crtsh: bool, t
 
     SubdomainEnum = load_module('subdomain_enum', 'SubdomainEnum')
     try:
-        sub_enum = SubdomainEnum(domain, wordlist, threads, timeout)
+        nameservers = parse_resolvers(resolvers) if resolvers else None
+        sub_enum = SubdomainEnum(domain, wordlist, threads, timeout, nameservers)
     except OSError as e:
         click.echo(f"{Colors.ERROR}Error: cannot read wordlist: {e}{Colors.RESET}")
         sys.exit(1)
@@ -149,6 +152,18 @@ def subdomain(domain: str, wordlist: Optional[str], threads: int, crtsh: bool, t
     except Exception as e:
         click.echo(f"{Colors.ERROR}Error: {e}{Colors.RESET}")
         sys.exit(1)
+
+def parse_resolvers(value: str) -> List[str]:
+    """"1.1.1.1, 2606:4700:4700::1111" -> list of IP addresses; dnspython needs addresses, not names."""
+    servers = [v.strip() for v in value.split(',') if v.strip()]
+    try:
+        servers = [str(ipaddress.ip_address(v)) for v in servers]
+    except ValueError:
+        raise ValueError(f"Resolvers must be IP addresses: {value}")
+    if not servers:
+        raise ValueError(f"No resolvers given: {value!r}")
+    return servers
+
 
 def parse_ports(ports_str: str) -> List[int]:
     """Parse "80", "20-25", "80,443", a mix such as "22,80-90", "top100" (also inside a list,

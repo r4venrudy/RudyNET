@@ -32,7 +32,7 @@ class FailUnderTests(unittest.TestCase):
 
 
 class _FakeSub:
-    def __init__(self, domain, wordlist, threads, timeout):
+    def __init__(self, domain, wordlist, threads, timeout, nameservers=None):
         self.domain = domain
 
     def enumerate(self, extra):
@@ -56,3 +56,16 @@ class CrtshPipeTests(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(json.loads(result.stdout)["domain"], "example.com")
         self.assertIn("crt.sh lookup failed", result.stderr)
+
+
+class ResolverOptionTests(unittest.TestCase):
+    def test_parse_resolvers(self):
+        self.assertEqual(rudynet.parse_resolvers("1.1.1.1, 2606:4700:4700::1111"), ["1.1.1.1", "2606:4700:4700::1111"])
+        for bad in ("dns.google", " , "):
+            with self.assertRaises(ValueError):
+                rudynet.parse_resolvers(bad)
+
+    def test_resolvers_reach_the_resolver(self):
+        from modules.subdomain_enum import SubdomainEnum
+        enum = SubdomainEnum("example.com", nameservers=["9.9.9.9"])
+        self.assertEqual(enum.resolver.nameservers, ["9.9.9.9"])
