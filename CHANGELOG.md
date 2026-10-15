@@ -5,6 +5,7 @@
 ### scan
 - `--banner` reads banners over TLS on ports 443, 465, 993, 995 and 8443
 - `-r/--rate` caps new connections per second for hosts or firewalls that drop bursts
+- `-p` accepts `top100` inside a list (`top100,8081`) and `-` for all ports
 
 ### subdomain
 - Wildcard DNS is probed with up to three random names, so round-robin wildcards are filtered fully

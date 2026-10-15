@@ -118,6 +118,12 @@ class ParsePortsTests(unittest.TestCase):
     def test_mixed_list_and_ranges(self):
         self.assertEqual(parse_ports("22,80-82,81"), [22, 80, 81, 82])
 
+    def test_top100_in_a_list_and_all_ports(self):
+        ports = parse_ports("top100,8081")
+        self.assertIn(8081, ports)
+        self.assertIn(443, ports)
+        self.assertEqual(len(parse_ports("-")), 65535)
+
     def test_top100(self):
         ports = parse_ports("TOP100")
         self.assertEqual(len(ports), 100)
