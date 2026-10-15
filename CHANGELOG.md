@@ -6,6 +6,13 @@
 - `--banner` reads banners over TLS on ports 443, 465, 993, 995 and 8443
 - `-r/--rate` caps new connections per second for hosts or firewalls that drop bursts
 
+### subdomain
+- Wildcard DNS is probed with up to three random names, so round-robin wildcards are filtered fully
+- A failed crt.sh lookup no longer writes its warning into JSON on stdout
+
+### output
+- CSV values that start with `=`, `+`, `-` or `@` are quoted so spreadsheets don't run them as formulas
+
 ### web
 - A `Server` header only counts as an information leak when it carries a version number
 - HSTS details say when a `preload` flag does not meet the preload list requirements
