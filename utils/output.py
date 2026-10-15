@@ -130,7 +130,8 @@ class OutputFormatter:
     def display_scan_results(results: Dict[str, Any], output: Optional[str] = None, file: Optional[str] = None) -> None:
         with human_view(output, file):
             print(f"{Colors.BOLD}Target{Colors.RESET}  {results['target']} ({results['ip']})")
-            print(f"{Colors.BOLD}Scanned{Colors.RESET} {results['scanned']} ports ({results['scan_type']})\n")
+            took = f" in {results['seconds']:.1f} s" if "seconds" in results else ""
+            print(f"{Colors.BOLD}Scanned{Colors.RESET} {results['scanned']} ports ({results['scan_type']}){took}\n")
             if not results["open"]:
                 print(f"{Colors.WARNING}No open ports found")
             for r in results["open"]:

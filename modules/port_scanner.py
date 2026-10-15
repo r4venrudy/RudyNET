@@ -192,7 +192,9 @@ class PortScanner:
             jobs += [(self._tcp, p) for p in ports]
         if scan_type in ("udp", "both"):
             jobs += [(self._udp, p) for p in ports]
+        started = time.monotonic()
         with ThreadPoolExecutor(max_workers=min(self.workers, max(1, len(jobs)))) as pool:
             found = [r for r in pool.map(lambda j: j[0](j[1]), jobs) if r]
         found.sort(key=lambda r: (r["protocol"], r["port"]))
-        return {"target": self.target, "ip": self.ip, "scanned": len(ports), "scan_type": scan_type, "open": found}
+        return {"target": self.target, "ip": self.ip, "scanned": len(ports), "scan_type": scan_type,
+                "seconds": round(time.monotonic() - started, 2), "open": found}
