@@ -11,7 +11,7 @@ from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from modules.port_scanner import UDP_PROBES, PortScanner, RateLimiter, clean_banner, clean_target  # noqa: E402
+from modules.port_scanner import UDP_PROBES, PortScanner, RateLimiter, clean_banner, clean_target, udp_banner  # noqa: E402
 from rudynet import parse_ports  # noqa: E402
 
 
@@ -181,3 +181,16 @@ class RateLimiterTests(unittest.TestCase):
     def test_zero_means_unlimited(self):
         limiter = RateLimiter(0, sleep=lambda s: self.fail("should not sleep"))
         limiter.wait()
+
+
+class UdpBannerTests(unittest.TestCase):
+    def test_ssdp_server_header(self):
+        reply = b"HTTP/1.1 200 OK\r\nCACHE-CONTROL: max-age=1800\r\nSERVER: Linux/5.4 UPnP/1.0 MiniUPnPd/2.2\r\n\r\n"
+        self.assertEqual(udp_banner(1900, reply), "Linux/5.4 UPnP/1.0 MiniUPnPd/2.2")
+
+    def test_snmp_sysdescr(self):
+        descr = b"RouterOS RB750"
+        varbind = b"\x06\x08\x2b\x06\x01\x02\x01\x01\x01\x00\x04" + bytes([len(descr)]) + descr
+        reply = b"\x30\x2f\x02\x01\x00\x04\x06public\xa2\x22\x02\x01\x01\x02\x01\x00\x02\x01\x00\x30\x17\x30\x15" + varbind
+        self.assertEqual(udp_banner(161, reply), "RouterOS RB750")
+        self.assertEqual(udp_banner(53, reply), "")

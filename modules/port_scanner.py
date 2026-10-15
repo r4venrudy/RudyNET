@@ -57,6 +57,25 @@ def clean_banner(raw: bytes, limit: int = 120) -> str:
     return first[:limit]
 
 
+def udp_banner(port: int, data: bytes) -> str:
+    """Readable part of a UDP reply: the SSDP SERVER header or the SNMP sysDescr string."""
+    if port == 1900:
+        for line in data.decode("latin-1").splitlines():
+            if line.lower().startswith("server:"):
+                return clean_banner(line.split(":", 1)[1].encode("latin-1"))
+        return ""
+    if port == 161:
+        # the requested value is the last OCTET STRING (tag 0x04) in the response
+        at = data.rfind(b"\x04")
+        while at > 0:
+            length = data[at + 1] if at + 1 < len(data) else 0
+            if length < 0x80 and at + 2 + length == len(data):
+                return clean_banner(data[at + 2:])
+            at = data.rfind(b"\x04", 0, at)
+        return ""
+    return ""
+
+
 def clean_target(target: str) -> str:
     """Reduce "https://host:8443/path" or "[::1]" to the bare host so URLs can be pasted as targets."""
     host = target.strip()
@@ -160,8 +179,11 @@ class PortScanner:
                 return None
             except OSError:
                 return None  # ICMP port unreachable => closed
-            return {"port": port, "protocol": "udp", "state": "open",
-                    "service": service_name(port, "udp"), "bytes": len(data)}
+            result: Dict[str, Any] = {"port": port, "protocol": "udp", "state": "open",
+                                      "service": service_name(port, "udp"), "bytes": len(data)}
+            if self.banner and udp_banner(port, data):
+                result["banner"] = udp_banner(port, data)
+            return result
 
     def scan(self, ports: List[int], scan_type: str = "tcp") -> Dict[str, Any]:
         """Scan `ports` with 'tcp', 'udp' or 'both' and return only the open ones, sorted."""

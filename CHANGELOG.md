@@ -6,7 +6,7 @@
 - `--banner` reads banners over TLS on ports 443, 465, 993, 995 and 8443
 - `-r/--rate` caps new connections per second for hosts or firewalls that drop bursts
 - `-p` accepts `top100` inside a list (`top100,8081`) and `-` for all ports
-- UDP probes for NetBIOS (137), SNMP (161, community "public") and SSDP (1900), which ignore an empty datagram
+- UDP probes for NetBIOS (137), SNMP (161, community "public") and SSDP (1900), which ignore an empty datagram; with `--banner` the SSDP server string and SNMP sysDescr are shown
 
 ### subdomain
 - Wildcard DNS is probed with up to three random names, so round-robin wildcards are filtered fully
