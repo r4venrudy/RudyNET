@@ -139,7 +139,8 @@ def subdomain(domain: str, wordlist: Optional[str], threads: int, crtsh: bool, t
                 extra = crtsh_names(sub_enum.domain)
                 click.echo(f"{Colors.INFO}crt.sh returned {len(extra)} names", err=bool(output and not file))
             except Exception as e:
-                click.echo(f"{Colors.WARNING}crt.sh lookup failed, continuing with wordlist only: {e}")
+                click.echo(f"{Colors.WARNING}crt.sh lookup failed, continuing with wordlist only: {e}",
+                           err=bool(output and not file))
         results = sub_enum.enumerate(extra)
         OutputFormatter.display_subdomain_results(results, output, file)
     except KeyboardInterrupt:

@@ -29,3 +29,22 @@ class FailUnderTests(unittest.TestCase):
     def test_exit_code_0_at_or_above_threshold(self):
         self.assertEqual(self.run_web("--fail-under", "62").exit_code, 0)
         self.assertEqual(self.run_web().exit_code, 0)
+
+
+class _FakeSub:
+    def __init__(self, domain, wordlist, threads, timeout):
+        self.domain = domain
+
+    def enumerate(self, extra):
+        return {"domain": self.domain, "tried": 0, "wildcard": [], "found": []}
+
+
+class CrtshPipeTests(unittest.TestCase):
+    def test_crtsh_failure_keeps_json_stdout_clean(self):
+        import json
+        with mock.patch.object(rudynet, "load_module", return_value=_FakeSub), \
+                mock.patch("modules.subdomain_enum.crtsh_names", side_effect=RuntimeError("down")):
+            result = CliRunner().invoke(rudynet.cli, ["subdomain", "-d", "example.com", "--crtsh", "-o", "json"])
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(json.loads(result.stdout)["domain"], "example.com")
+        self.assertIn("crt.sh lookup failed", result.stderr)
