@@ -22,6 +22,14 @@ def _flatten(data: Any, prefix: str = "") -> Dict[str, Any]:
     return flat
 
 
+def _csv_safe(value: Any) -> Any:
+    """Banners, headers and DNS names come from the target, so a value like "=HYPERLINK(...)" would
+    run as a formula when the CSV is opened in a spreadsheet. Prefix such strings with a quote."""
+    if isinstance(value, str) and value[:1] in ("=", "+", "-", "@", "\t", "\r"):
+        return "'" + value
+    return value
+
+
 def render(results: Any, fmt: str) -> str:
     """Serialize results as json, or as flattened key/value csv or txt."""
     if fmt == "json":
@@ -32,7 +40,7 @@ def render(results: Any, fmt: str) -> str:
         writer = csv.writer(buf)
         writer.writerow(["key", "value"])
         for k, v in rows.items():
-            writer.writerow([k, v])
+            writer.writerow([k, _csv_safe(v)])
         return buf.getvalue()
     if fmt == "txt":
         return "\n".join(f"{k}: {v}" for k, v in rows.items()) + "\n"

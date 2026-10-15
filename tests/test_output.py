@@ -59,3 +59,11 @@ class PipeTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CsvSafetyTests(unittest.TestCase):
+    def test_formula_like_values_are_quoted(self):
+        text = render({"banner": "=HYPERLINK(\"http://x\")", "port": -1, "name": "www"}, "csv")
+        self.assertIn("banner,\"'=HYPERLINK(\"\"http://x\"\")\"", text)
+        self.assertIn("port,-1", text)
+        self.assertIn("name,www", text)
