@@ -7,10 +7,11 @@ import tempfile
 import sys
 import threading
 import unittest
+from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from modules.port_scanner import PortScanner, RateLimiter, clean_banner, clean_target  # noqa: E402
+from modules.port_scanner import UDP_PROBES, PortScanner, RateLimiter, clean_banner, clean_target  # noqa: E402
 from rudynet import parse_ports  # noqa: E402
 
 
@@ -79,6 +80,26 @@ class PortScannerTests(unittest.TestCase):
         finally:
             srv.close()
         self.assertEqual(result["open"][0]["banner"], "* OK IMAP4rev1 ready")
+
+    def test_udp_service_answers_its_probe(self):
+        srv = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        srv.bind(("127.0.0.1", 0))
+        port = srv.getsockname()[1]
+        received = []
+
+        def serve():
+            data, addr = srv.recvfrom(1024)
+            received.append(data)
+            srv.sendto(b"\x30\x00", addr)
+
+        threading.Thread(target=serve, daemon=True).start()
+        with mock.patch.dict(UDP_PROBES, {port: UDP_PROBES[161]}):
+            try:
+                result = PortScanner("127.0.0.1", timeout=1).scan([port], "udp")
+            finally:
+                srv.close()
+        self.assertEqual([r["port"] for r in result["open"]], [port])
+        self.assertEqual(received, [UDP_PROBES[161]])
 
     @unittest.skipUnless(socket.has_ipv6, "no IPv6 support")
     def test_ipv6_target(self):

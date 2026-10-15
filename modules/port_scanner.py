@@ -33,6 +33,12 @@ TLS_PORTS = {443, 465, 993, 995, 8443}
 UDP_PROBES = {
     53: b"\x12\x34\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x01",  # DNS root NS query
     123: b"\x1b" + 47 * b"\x00",  # NTP client request
+    # NetBIOS node status query for "*"
+    137: b"\x80\xf0\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x20" + b"CK" + 30 * b"A" + b"\x00\x00\x21\x00\x01",
+    # SNMPv1 GetRequest for sysDescr.0 with the default "public" community
+    161: bytes.fromhex("302602010004067075626c6963a019020101020100020100300e300c06082b060102010101000500"),
+    # SSDP discovery (UPnP devices such as routers and printers)
+    1900: b"M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: \"ssdp:discover\"\r\nMX: 1\r\nST: ssdp:all\r\n\r\n",
 }
 
 

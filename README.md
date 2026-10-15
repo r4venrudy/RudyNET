@@ -20,7 +20,7 @@ A modular command-line toolkit for TCP/UDP port checks, banner observations, HTT
 
 | Command | Implemented behavior |
 | :--- | :--- |
-| `scan` | TCP connect checks, selected UDP probes and optional banner reads |
+| `scan` | TCP connect checks, UDP probes for DNS, NTP, NetBIOS, SNMP and SSDP (other UDP ports get an empty datagram) and optional banner reads |
 | `web` | Certificate inspection, HTTP security-header heuristics and cookie observations |
 | `subdomain` | Wordlist-based DNS resolution, wildcard filtering, CNAME observations and optional crt.sh discovery |
 
