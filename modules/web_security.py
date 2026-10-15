@@ -3,6 +3,7 @@
 import re
 import socket
 import ssl
+import warnings
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Tuple
 from urllib.parse import urlparse
@@ -205,6 +206,8 @@ class WebSecurity:
             issues.append(f"Certificate expires in {days_left} days")
         if protocol in WEAK_PROTOCOLS:
             issues.append(f"Weak protocol negotiated: {protocol}")
+        elif self.accepts_legacy_tls():
+            issues.append("Server still accepts TLS 1.0/1.1")
 
         return {
             "valid": True,
@@ -217,6 +220,33 @@ class WebSecurity:
             "san_count": len(sans),
             "issues": issues,
         }
+
+    def accepts_legacy_tls(self) -> Any:
+        """True when the server still completes a TLS 1.0/1.1 handshake, False when it refuses,
+        None when this machine's OpenSSL can't offer those versions at all (so it wasn't tested)."""
+        tls_port = self.port if self.https else 443
+        try:
+            ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", DeprecationWarning)  # deprecated on purpose: that's the test
+                ctx.minimum_version = ssl.TLSVersion.TLSv1
+                ctx.maximum_version = ssl.TLSVersion.TLSv1_1
+            ctx.set_ciphers("DEFAULT:@SECLEVEL=0")
+        except (ValueError, ssl.SSLError):
+            return None
+        try:
+            with socket.create_connection((self.host, tls_port), timeout=self.timeout) as sock:
+                with ctx.wrap_socket(sock, server_hostname=self.host):
+                    return True
+        except ssl.SSLError as e:
+            # our side refusing to offer the protocol says nothing about the server
+            if "NO_PROTOCOLS_AVAILABLE" in str(e) or "UNSUPPORTED_PROTOCOL" in str(e) and "alert" not in str(e).lower():
+                return None
+            return False
+        except OSError:
+            return False
 
     def check_headers(self) -> Dict[str, Any]:
         try:

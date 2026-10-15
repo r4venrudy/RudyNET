@@ -1,13 +1,20 @@
 import os
+import shutil
+import socket
+import ssl
+import subprocess
 import sys
+import tempfile
+import threading
 import unittest
+import warnings
 
 from requests.structures import CaseInsensitiveDict
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from modules.web_security import (  # noqa: E402
-    check_csp, collect_set_cookies, check_frame_options, check_referrer_policy, check_hsts, evaluate_cookies, evaluate_headers, grade, normalize_url,
+    WebSecurity, check_csp, collect_set_cookies, check_frame_options, check_referrer_policy, check_hsts, evaluate_cookies, evaluate_headers, grade, normalize_url,
 )
 from utils.output import render  # noqa: E402
 
@@ -164,3 +171,51 @@ class RedirectCookieTests(unittest.TestCase):
     def test_cookies_from_redirect_hops_are_included(self):
         resp = _Resp(["final=1; Secure"], history=[_Resp(["session=abc"])])
         self.assertEqual(collect_set_cookies(resp), ["session=abc", "final=1; Secure"])
+
+
+@unittest.skipUnless(shutil.which("openssl"), "openssl is needed to make a test certificate")
+class LegacyTlsTests(unittest.TestCase):
+    def _server(self, legacy):
+        tmp = tempfile.mkdtemp()
+        cert, key = os.path.join(tmp, "c.pem"), os.path.join(tmp, "k.pem")
+        subprocess.run(["openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-days", "1",
+                        "-subj", "/CN=localhost", "-keyout", key, "-out", cert], check=True, capture_output=True)
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        ctx.load_cert_chain(cert, key)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            if legacy:
+                try:
+                    ctx.minimum_version = ssl.TLSVersion.TLSv1
+                    ctx.maximum_version = ssl.TLSVersion.TLSv1
+                    ctx.set_ciphers("DEFAULT:@SECLEVEL=0")
+                except (ValueError, ssl.SSLError):
+                    self.skipTest("this OpenSSL cannot serve TLS 1.0")
+            else:
+                ctx.minimum_version = ssl.TLSVersion.TLSv1_2
+        srv = socket.socket()
+        srv.bind(("127.0.0.1", 0))
+        srv.listen(1)
+
+        def serve():
+            try:
+                conn, _ = srv.accept()
+                with ctx.wrap_socket(conn, server_side=True):
+                    pass
+            except OSError:
+                pass
+
+        threading.Thread(target=serve, daemon=True).start()
+        self.addCleanup(srv.close)
+        return srv.getsockname()[1]
+
+    def test_modern_server_refuses_legacy_tls(self):
+        port = self._server(legacy=False)
+        self.assertIs(WebSecurity(f"https://127.0.0.1:{port}", timeout=3).accepts_legacy_tls(), False)
+
+    def test_tls10_server_is_reported(self):
+        port = self._server(legacy=True)
+        result = WebSecurity(f"https://127.0.0.1:{port}", timeout=3).accepts_legacy_tls()
+        if result is None:
+            self.skipTest("this OpenSSL cannot offer TLS 1.0")
+        self.assertIs(result, True)

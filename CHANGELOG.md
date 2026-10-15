@@ -16,6 +16,7 @@
 - CSV values that start with `=`, `+`, `-` or `@` are quoted so spreadsheets don't run them as formulas
 
 ### web
+- Reports servers that still accept a TLS 1.0/1.1 handshake (skipped when the local OpenSSL can't offer those versions)
 - A `Server` header only counts as an information leak when it carries a version number
 - HSTS details say when a `preload` flag does not meet the preload list requirements
 
