@@ -59,10 +59,19 @@ class SubdomainEnum:
                 dns.exception.Timeout, dns.name.LabelTooLong, dns.name.EmptyLabel):
             return []
 
-    def wildcard_ips(self) -> Set[str]:
-        """Addresses a random label resolves to; hits matching these are wildcard noise."""
-        probe = f"{secrets.token_hex(8)}.{self.domain}"
-        return set(self._resolve(probe)) | set(self._resolve(probe, "AAAA"))
+    def wildcard_ips(self, probes: int = 3) -> Set[str]:
+        """Addresses random labels resolve to; hits matching these are wildcard noise.
+
+        Several probes, because wildcard records behind a CDN or round-robin DNS answer with a
+        different subset of addresses each time, and one probe would miss some of them.
+        """
+        found: Set[str] = set()
+        for _ in range(probes):
+            probe = f"{secrets.token_hex(8)}.{self.domain}"
+            found |= set(self._resolve(probe)) | set(self._resolve(probe, "AAAA"))
+            if not found:
+                break  # no answer for the first random name: there is no wildcard
+        return found
 
     def _check(self, name: str, wildcard: Set[str]) -> Optional[Dict[str, Any]]:
         """Resolve one name; drop it if it only returns wildcard addresses."""

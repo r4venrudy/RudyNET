@@ -59,6 +59,19 @@ class SubdomainTests(unittest.TestCase):
         self.assertEqual(result["wildcard"], ["10.0.0.1"])
         self.assertEqual([r["subdomain"] for r in result["found"]], ["api.example.com"])
 
+    def test_rotating_wildcard_addresses_are_all_collected(self):
+        answers = iter([["10.0.0.1"], [], ["10.0.0.2"], [], ["10.0.0.3"], []])
+        enum = FakeResolverEnum({})
+        enum._resolve = lambda name, rtype="A": next(answers)
+        self.assertEqual(enum.wildcard_ips(), {"10.0.0.1", "10.0.0.2", "10.0.0.3"})
+
+    def test_no_wildcard_needs_one_probe(self):
+        calls = []
+        enum = FakeResolverEnum({})
+        enum._resolve = lambda name, rtype="A": calls.append(name) or []
+        self.assertEqual(enum.wildcard_ips(), set())
+        self.assertEqual(len(calls), 2)
+
     def test_crtsh_names_are_cleaned_and_scoped(self):
         fake = mock.Mock()
         fake.json.return_value = [
