@@ -22,7 +22,7 @@ A modular command-line toolkit for TCP/UDP port checks, banner observations, HTT
 | :--- | :--- |
 | `scan` | TCP connect checks, UDP probes for DNS, NTP, NetBIOS, SNMP and SSDP (other UDP ports get an empty datagram) and optional banner reads |
 | `web` | Certificate inspection, a check whether the server still accepts TLS 1.0/1.1, HTTP security-header heuristics, cookie observations and whether a security.txt (RFC 9116) is published |
-| `subdomain` | Wordlist-based DNS resolution, wildcard filtering, CNAME observations and optional crt.sh discovery |
+| `subdomain` | Wordlist-based DNS resolution, wildcard filtering, CNAME observations, dangling CNAMEs to hosting services (possible subdomain takeover) and optional crt.sh discovery |
 
 ## Quick start
 

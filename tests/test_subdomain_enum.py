@@ -85,3 +85,13 @@ class SubdomainTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DanglingCnameTests(unittest.TestCase):
+    def test_cname_to_unclaimed_service_is_reported(self):
+        enum = FakeResolverEnum({
+            ("blog.example.com", "CNAME"): ["old-blog.github.io."],
+            ("www.example.com", "CNAME"): ["gone.internal.example.net."],
+        })
+        found = enum.enumerate()["found"]
+        self.assertEqual(found, [{"subdomain": "blog.example.com", "ips": [], "cname": "old-blog.github.io", "dangling": True}])

@@ -9,6 +9,7 @@
 - UDP probes for NetBIOS (137), SNMP (161, community "public") and SSDP (1900), which ignore an empty datagram; with `--banner` the SSDP server string and SNMP sysDescr are shown
 
 ### subdomain
+- Names whose CNAME points at a hosting service (GitHub Pages, Heroku, S3, Azure…) but no longer resolves are reported as possible takeovers (`dangling: true`)
 - Wildcard DNS is probed with up to three random names, so round-robin wildcards are filtered fully
 - A failed crt.sh lookup no longer writes its warning into JSON on stdout
 

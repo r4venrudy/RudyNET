@@ -146,6 +146,9 @@ class OutputFormatter:
             if results["wildcard"]:
                 print(f"{Colors.WARNING}Wildcard DNS detected ({', '.join(results['wildcard'])}); matching hits were filtered\n")
             for r in results["found"]:
+                if r.get("dangling"):
+                    print(f"{Colors.ERROR}{r['subdomain']:<40} dangling CNAME -> {r['cname']} (possible takeover){Colors.RESET}")
+                    continue
                 extra = f" {Colors.DIM}-> {r['cname']}{Colors.RESET}" if r.get("cname") else ""
                 print(f"{Colors.SUCCESS}{r['subdomain']:<40} {', '.join(r['ips'])}{extra}")
             print(f"\n{Colors.INFO}{len(results['found'])} found out of {results['tried']} names tried")

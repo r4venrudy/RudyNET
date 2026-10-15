@@ -13,6 +13,15 @@ DEFAULT_WORDLIST = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(
                                 "data", "subdomains.txt")
 
 
+# Hosting services where a CNAME left pointing at a deleted site/bucket can be claimed by someone else
+TAKEOVER_SUFFIXES = (
+    ".github.io", ".herokuapp.com", ".herokudns.com", ".s3.amazonaws.com", ".cloudfront.net",
+    ".azurewebsites.net", ".cloudapp.net", ".trafficmanager.net", ".blob.core.windows.net",
+    ".pantheonsite.io", ".netlify.app", ".fly.dev", ".surge.sh", ".bitbucket.io", ".ghost.io",
+    ".myshopify.com", ".wpengine.com", ".zendesk.com", ".readthedocs.io",
+)
+
+
 def load_wordlist(path: Optional[str]) -> List[str]:
     """Read a wordlist (or the bundled data/subdomains.txt), lowercased, deduplicated, comments skipped."""
     with open(path or DEFAULT_WORDLIST, encoding="utf-8", errors="ignore") as fh:
@@ -77,7 +86,14 @@ class SubdomainEnum:
         """Resolve one name; drop it if it only returns wildcard addresses."""
         # IPv6-only hosts have no A record, so fall back to AAAA before calling the name missing
         ips = self._resolve(name) or self._resolve(name, "AAAA")
-        if not ips or (wildcard and set(ips) <= wildcard):
+        if not ips:
+            # a CNAME to a hosting service whose target no longer resolves is a takeover candidate
+            cname = self._resolve(name, "CNAME")
+            target = cname[0].rstrip(".").lower() if cname else ""
+            if target.endswith(TAKEOVER_SUFFIXES):
+                return {"subdomain": name, "ips": [], "cname": target, "dangling": True}
+            return None
+        if wildcard and set(ips) <= wildcard:
             return None
         cname = self._resolve(name, "CNAME")
         return {"subdomain": name, "ips": ips, "cname": cname[0].rstrip(".") if cname else None}
