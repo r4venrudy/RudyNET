@@ -18,6 +18,7 @@
 - CSV values that start with `=`, `+`, `-` or `@` are quoted so spreadsheets don't run them as formulas
 
 ### web
+- Cookies named `__Host-` or `__Secure-` are checked against the prefix rules browsers enforce
 - For https:// targets, checks that plain http:// on the same host redirects to HTTPS (reported, not scored)
 - Shows whether `/.well-known/security.txt` (RFC 9116) is published, with its contacts and expiry; not part of the score
 - Reports servers that still accept a TLS 1.0/1.1 handshake (skipped when the local OpenSSL can't offer those versions)

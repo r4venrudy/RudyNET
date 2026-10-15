@@ -151,6 +151,13 @@ def evaluate_cookies(set_cookie_values: List[str], https: bool) -> List[str]:
             missing.append("SameSite")
         if missing:
             issues.append(f"{name} missing {', '.join(missing)}")
+        # browsers reject prefixed cookies that break the prefix rules, so the cookie silently isn't set
+        path = next((a.strip().split("=", 1)[1].strip() for a in raw.split(";")[1:]
+                     if a.strip().lower().startswith("path=")), None)
+        if name.startswith("__Host-") and ("secure" not in attrs or "domain" in attrs or path != "/"):
+            issues.append(f"{name} breaks __Host- rules (needs Secure, Path=/ and no Domain)")
+        elif name.startswith("__Secure-") and "secure" not in attrs:
+            issues.append(f"{name} breaks __Secure- rules (needs Secure)")
     return issues
 
 

@@ -133,6 +133,14 @@ class CookieTests(unittest.TestCase):
         issues = evaluate_cookies(["sid=abc; Path=/", "ok=1; Secure; HttpOnly; SameSite=Lax"], https=True)
         self.assertEqual(issues, ["sid missing Secure, HttpOnly, SameSite"])
 
+    def test_cookie_prefix_rules(self):
+        good = "__Host-sid=1; Secure; HttpOnly; SameSite=Lax; Path=/"
+        self.assertEqual(evaluate_cookies([good], https=True), [])
+        issues = evaluate_cookies(["__Host-sid=1; Secure; HttpOnly; SameSite=Lax; Path=/app",
+                                   "__Secure-t=1; HttpOnly; SameSite=Lax"], https=False)
+        self.assertEqual(issues, ["__Host-sid breaks __Host- rules (needs Secure, Path=/ and no Domain)",
+                                  "__Secure-t breaks __Secure- rules (needs Secure)"])
+
     def test_secure_not_required_over_plain_http(self):
         self.assertEqual(evaluate_cookies(["a=1; HttpOnly; SameSite=Strict"], https=False), [])
 
