@@ -3,6 +3,8 @@
 import ipaddress
 import socket
 import ssl
+import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
@@ -60,13 +62,35 @@ def clean_target(target: str) -> str:
     return host
 
 
+class RateLimiter:
+    """Spaces out calls from all worker threads to at most `rate` per second (0 means no limit)."""
+
+    def __init__(self, rate: float, clock=time.monotonic, sleep=time.sleep):
+        self.interval = 1.0 / rate if rate > 0 else 0.0
+        self.clock = clock
+        self.sleep = sleep
+        self.lock = threading.Lock()
+        self.next_at = 0.0
+
+    def wait(self) -> None:
+        if not self.interval:
+            return
+        with self.lock:
+            now = self.clock()
+            at = max(now, self.next_at)
+            self.next_at = at + self.interval
+        if at > now:
+            self.sleep(at - now)
+
+
 class PortScanner:
-    def __init__(self, target: str, timeout: float = 1.0, banner: bool = False, workers: int = 200):
+    def __init__(self, target: str, timeout: float = 1.0, banner: bool = False, workers: int = 200, rate: float = 0):
         self.target = clean_target(target)
         self.timeout = timeout
         self.banner = banner
         self.workers = workers
         self.tls_ports = TLS_PORTS
+        self.limiter = RateLimiter(rate)
         # getaddrinfo also returns IPv6 addresses (gethostbyname only knew IPv4); prefer IPv4 when a host has both
         infos = socket.getaddrinfo(self.target, None, type=socket.SOCK_STREAM)
         family, _, _, _, sockaddr = sorted(infos, key=lambda i: i[0] != socket.AF_INET)[0]
@@ -74,6 +98,7 @@ class PortScanner:
         self.ip = sockaddr[0]
 
     def _tcp(self, port: int) -> Optional[Dict[str, Any]]:
+        self.limiter.wait()
         try:
             with socket.create_connection((self.ip, port), timeout=self.timeout) as sock:
                 result: Dict[str, Any] = {"port": port, "protocol": "tcp", "state": "open",
@@ -118,6 +143,7 @@ class PortScanner:
             return clean_banner(tls.recv(1024))
 
     def _udp(self, port: int) -> Optional[Dict[str, Any]]:
+        self.limiter.wait()
         with socket.socket(self.family, socket.SOCK_DGRAM) as sock:
             sock.settimeout(self.timeout)
             try:

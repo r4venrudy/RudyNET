@@ -53,7 +53,8 @@ def cli():
 @click.option('-f', '--file', help='Output file')
 @click.option('--banner', is_flag=True, help='Grab banners')
 @click.option('-w', '--workers', default=200, type=click.IntRange(1, 1000), help='Parallel connections (1-1000)')
-def scan(target: str, ports: str, timeout: float, scan_type: str, output: Optional[str], file: Optional[str], banner: bool, workers: int):
+@click.option('-r', '--rate', default=0.0, type=click.FloatRange(0), help='Max new connections per second for fragile hosts (0 = no limit)')
+def scan(target: str, ports: str, timeout: float, scan_type: str, output: Optional[str], file: Optional[str], banner: bool, workers: int, rate: float):
     """Scan TCP/UDP ports on a host and optionally read service banners."""
     with human_view(output, file):
         Colors.print_banner()
@@ -64,7 +65,7 @@ def scan(target: str, ports: str, timeout: float, scan_type: str, output: Option
     try:
         port_list = parse_ports(ports)
         # Resolving the host can fail, so it belongs inside the error handling
-        scanner = PortScanner(target, timeout, banner, workers)
+        scanner = PortScanner(target, timeout, banner, workers, rate)
         results = scanner.scan(port_list, scan_type)
         OutputFormatter.display_scan_results(results, output, file)
     except socket.gaierror:

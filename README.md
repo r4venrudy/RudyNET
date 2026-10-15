@@ -54,6 +54,7 @@ python -m unittest discover -s tests -v
 | `scan` | `-T, --timeout` | `1.0` | Seconds per connection |
 | `scan` | `--banner` | off | Read service greetings, HTTP `HEAD` for silent ports |
 | `scan` | `-w, --workers` | `200` | Parallel connections (1-1000); lower it for fragile hosts or slow links |
+| `scan` | `-r, --rate` | `0` | Max new connections per second across all workers (0 = no limit) |
 | `web` | `--ssl-only` | off | Only inspect the TLS certificate |
 | `web` | `-T, --timeout` | `10.0` | Seconds per request |
 | `web` | `--fail-under` | none | Exit with status 2 when the score is below this value, for CI checks |

@@ -10,7 +10,7 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from modules.port_scanner import PortScanner, clean_banner, clean_target  # noqa: E402
+from modules.port_scanner import PortScanner, RateLimiter, clean_banner, clean_target  # noqa: E402
 from rudynet import parse_ports  # noqa: E402
 
 
@@ -136,3 +136,21 @@ class ParsePortsTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class RateLimiterTests(unittest.TestCase):
+    def test_spaces_calls_out(self):
+        now = [100.0]
+        slept = []
+
+        def sleep(s):
+            slept.append(round(s, 3))
+
+        limiter = RateLimiter(4, clock=lambda: now[0], sleep=sleep)
+        for _ in range(3):
+            limiter.wait()
+        self.assertEqual(slept, [0.25, 0.5])
+
+    def test_zero_means_unlimited(self):
+        limiter = RateLimiter(0, sleep=lambda s: self.fail("should not sleep"))
+        limiter.wait()

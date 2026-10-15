@@ -4,6 +4,7 @@
 
 ### scan
 - `--banner` reads banners over TLS on ports 443, 465, 993, 995 and 8443
+- `-r/--rate` caps new connections per second for hosts or firewalls that drop bursts
 
 ### web
 - A `Server` header only counts as an information leak when it carries a version number
