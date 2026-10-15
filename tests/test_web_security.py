@@ -219,3 +219,22 @@ class LegacyTlsTests(unittest.TestCase):
         if result is None:
             self.skipTest("this OpenSSL cannot offer TLS 1.0")
         self.assertIs(result, True)
+
+
+class SecurityTxtTests(unittest.TestCase):
+    def test_parse_fields(self):
+        from modules.web_security import parse_security_txt
+        info = parse_security_txt("# comment\nContact: mailto:security@example.com\nContact: https://example.com/report\nExpires: 2027-01-01T00:00:00Z\n")
+        self.assertEqual(info, {"contact": ["mailto:security@example.com", "https://example.com/report"],
+                                "expires": "2027-01-01T00:00:00Z"})
+
+    def test_html_fallback_page_is_not_counted(self):
+        from unittest import mock
+        from modules import web_security
+        html = mock.Mock(status_code=200, headers={"Content-Type": "text/html"}, text="<html>Contact: us</html>")
+        plain = mock.Mock(status_code=200, headers={"Content-Type": "text/plain; charset=utf-8"}, text="Contact: mailto:s@example.com\n")
+        ws = WebSecurity("https://example.com")
+        with mock.patch.object(web_security.requests, "get", return_value=html):
+            self.assertEqual(ws.check_security_txt(), {"found": False})
+        with mock.patch.object(web_security.requests, "get", return_value=plain):
+            self.assertTrue(ws.check_security_txt()["found"])

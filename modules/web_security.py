@@ -164,6 +164,18 @@ def collect_set_cookies(resp: Any) -> List[str]:
     return cookies
 
 
+def parse_security_txt(text: str) -> Dict[str, Any]:
+    """Contact and Expires fields from an RFC 9116 security.txt (comments and PGP armor skipped)."""
+    fields: Dict[str, List[str]] = {}
+    for line in text.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        fields.setdefault(key.strip().lower(), []).append(value.strip())
+    return {"contact": fields.get("contact", []), "expires": (fields.get("expires") or [None])[0]}
+
+
 def grade(score: int) -> str:
     """Map a 0-100 score to A+ .. F."""
     for threshold, letter in ((95, "A+"), (85, "A"), (70, "B"), (55, "C"), (40, "D")):
@@ -274,6 +286,21 @@ class WebSecurity:
         score = 0 if not tls.get("valid") else max(0, 100 - 25 * len(tls["issues"]))
         return {"target": self.url, "tls": tls, "score": score, "grade": grade(score)}
 
+    def check_security_txt(self) -> Dict[str, Any]:
+        """Whether the site publishes /.well-known/security.txt (how to report a vulnerability). Not scored."""
+        url = f"{urlparse(self.url).scheme}://{urlparse(self.url).netloc}/.well-known/security.txt"
+        try:
+            resp = requests.get(url, timeout=self.timeout, allow_redirects=True, headers={"User-Agent": USER_AGENT})
+        except requests.RequestException:
+            return {"found": False}
+        # many sites answer every path with their HTML homepage, so require plain text with a Contact line
+        if resp.status_code != 200 or "text/plain" not in resp.headers.get("Content-Type", ""):
+            return {"found": False}
+        info = parse_security_txt(resp.text[:20000])
+        if not info["contact"]:
+            return {"found": False}
+        return {"found": True, **info}
+
     def full_analysis(self) -> Dict[str, Any]:
         tls = self.check_tls()
         headers = self.check_headers()
@@ -283,4 +310,5 @@ class WebSecurity:
         else:
             deductions += 15 * len(tls["issues"])
         score = max(0, 100 - deductions)
-        return {"target": self.url, "tls": tls, "headers": headers, "score": score, "grade": grade(score)}
+        return {"target": self.url, "tls": tls, "headers": headers, "security_txt": self.check_security_txt(),
+                "score": score, "grade": grade(score)}

@@ -108,6 +108,15 @@ class OutputFormatter:
                         print(f"  {Colors.WARNING}Cookie: {issue}")
                 print()
 
+            sec = results.get("security_txt")
+            if sec is not None:
+                if sec.get("found"):
+                    print(f"{Colors.BOLD}security.txt{Colors.RESET}  {Colors.SUCCESS}{', '.join(sec['contact'][:2])}"
+                          + (f" (expires {sec['expires'][:10]})" if sec.get("expires") else ""))
+                else:
+                    print(f"{Colors.BOLD}security.txt{Colors.RESET}  {Colors.WARNING}not published")
+                print()
+
             if "score" in results:
                 print(f"{Colors.BOLD}Overall{Colors.RESET}  {Colors.grade(results['grade'])}  ({results['score']}/100)")
 
