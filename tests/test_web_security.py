@@ -143,6 +143,9 @@ class CookieTests(unittest.TestCase):
     def test_flags_missing_attributes(self):
         issues = evaluate_cookies(["sid=abc; Path=/", "ok=1; Secure; HttpOnly; SameSite=Lax"], https=True)
         self.assertEqual(issues, ["sid missing Secure, HttpOnly, SameSite"])
+        self.assertEqual(evaluate_cookies(["t=1; HttpOnly; SameSite=None"], https=False),
+                         ["t has SameSite=None without Secure (browsers reject it)"])
+        self.assertEqual(evaluate_cookies(["t=1; Secure; HttpOnly; SameSite=None"], https=True), [])
 
     def test_cookie_prefix_rules(self):
         good = "__Host-sid=1; Secure; HttpOnly; SameSite=Lax; Path=/"

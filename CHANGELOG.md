@@ -28,6 +28,7 @@
 - HSTS details say when a `preload` flag does not meet the preload list requirements
 - `frame-ancestors *` no longer counts as framing protection, and conflicting `X-Frame-Options` copies are treated as blocking, as browsers do
 - A duplicated `Strict-Transport-Security` header is graded on its first copy, the one browsers use
+- Cookies with `SameSite=None` but no `Secure` are reported, since browsers refuse to store them
 
 ## 1.2.0
 

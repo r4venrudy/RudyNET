@@ -166,6 +166,11 @@ def evaluate_cookies(set_cookie_values: List[str], https: bool) -> List[str]:
             missing.append("SameSite")
         if missing:
             issues.append(f"{name} missing {', '.join(missing)}")
+        # Chrome and Firefox drop a SameSite=None cookie that is not also Secure
+        samesite = next((a.strip().split("=", 1)[1].strip().lower() for a in raw.split(";")[1:]
+                         if a.strip().lower().startswith("samesite=")), None)
+        if samesite == "none" and "secure" not in attrs:
+            issues.append(f"{name} has SameSite=None without Secure (browsers reject it)")
         # browsers reject prefixed cookies that break the prefix rules, so the cookie silently isn't set
         path = next((a.strip().split("=", 1)[1].strip() for a in raw.split(";")[1:]
                      if a.strip().lower().startswith("path=")), None)
