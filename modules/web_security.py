@@ -84,7 +84,20 @@ def check_frame_options(value: str) -> Tuple[bool, str]:
     values = {v.strip().upper() for v in value.split(",")}
     if len(values) == 1 and values <= {"DENY", "SAMEORIGIN"}:
         return True, values.pop()
+    # the HTML standard blocks framing when copies disagree but include a value it knows
+    if len(values) > 1 and values & {"DENY", "SAMEORIGIN", "ALLOWALL"}:
+        return True, f"conflicting values '{value}' (browsers block framing)"
     return False, f"unexpected value '{value}'"
+
+
+def restricts_framing(csp: str) -> bool:
+    """True when a frame-ancestors directive limits embedders; "frame-ancestors *" allows everyone."""
+    for policy in csp.lower().split(","):
+        for directive in policy.split(";"):
+            parts = directive.split()
+            if parts and parts[0] == "frame-ancestors" and "*" not in parts[1:]:
+                return True
+    return False
 
 
 def check_referrer_policy(value: str) -> Tuple[bool, str]:
@@ -106,7 +119,7 @@ def evaluate_headers(headers: Dict[str, str], https: bool = True) -> Dict[str, A
     for header, weight in HEADER_WEIGHTS.items():
         value = headers.get(header)
         if value is None:
-            if header == "X-Frame-Options" and csp and "frame-ancestors" in csp.lower():
+            if header == "X-Frame-Options" and csp and restricts_framing(csp):
                 checks.append({"header": header, "ok": True, "detail": "covered by CSP frame-ancestors"})
                 continue
             checks.append({"header": header, "ok": False, "detail": "missing"})

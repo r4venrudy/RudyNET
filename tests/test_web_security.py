@@ -101,9 +101,17 @@ class FrameAndReferrerTests(unittest.TestCase):
         self.assertEqual(check_frame_options("sameorigin"), (True, "SAMEORIGIN"))
         self.assertFalse(check_frame_options("ALLOW-FROM https://x")[0])
 
+    def test_wildcard_frame_ancestors_does_not_cover_x_frame_options(self):
+        result = evaluate_headers(CaseInsensitiveDict({"Content-Security-Policy": "frame-ancestors *"}))
+        xfo = next(c for c in result["checks"] if c["header"] == "X-Frame-Options")
+        self.assertFalse(xfo["ok"])
+
+    def test_conflicting_frame_options_block_framing(self):
+        self.assertTrue(check_frame_options("DENY, SAMEORIGIN")[0])
+
     def test_frame_options_sent_twice(self):
         self.assertEqual(check_frame_options("SAMEORIGIN, sameorigin"), (True, "SAMEORIGIN"))
-        self.assertFalse(check_frame_options("DENY, SAMEORIGIN")[0])
+        self.assertFalse(check_frame_options("ALLOW-FROM https://x, ALLOW-FROM https://y")[0])
 
     def test_nosniff_sent_twice(self):
         result = evaluate_headers(CaseInsensitiveDict({**STRONG, "X-Content-Type-Options": "nosniff, nosniff"}))

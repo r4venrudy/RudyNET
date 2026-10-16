@@ -26,6 +26,7 @@
 - Reports servers that still accept a TLS 1.0/1.1 handshake (skipped when the local OpenSSL can't offer those versions)
 - A `Server` header only counts as an information leak when it carries a version number
 - HSTS details say when a `preload` flag does not meet the preload list requirements
+- `frame-ancestors *` no longer counts as framing protection, and conflicting `X-Frame-Options` copies are treated as blocking, as browsers do
 
 ## 1.2.0
 
