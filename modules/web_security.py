@@ -45,6 +45,8 @@ def _name(rdn_seq: Tuple) -> str:
 
 def check_hsts(value: str) -> Tuple[bool, str]:
     """Pass when max-age is at least 180 days; report includeSubDomains/preload when present."""
+    # RFC 6797 8.1: a browser only processes the first header, and duplicates arrive comma-joined
+    value = value.split(",", 1)[0]
     directives = {d.strip().split("=")[0].lower(): d.strip() for d in value.split(";") if d.strip()}
     max_age = 0
     if "max-age" in directives:

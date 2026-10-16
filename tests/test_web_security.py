@@ -77,6 +77,9 @@ class HeaderTests(unittest.TestCase):
                          (True, "max-age=31536000 (includesubdomains, preload)"))
         self.assertEqual(check_hsts("max-age=abc"), (False, "max-age is not a number"))
         self.assertEqual(check_hsts("includeSubDomains"), (False, "max-age=0 is below 180 days"))
+        # a header sent twice is graded on its first copy
+        self.assertEqual(check_hsts("max-age=31536000, max-age=0"), (True, "max-age=31536000"))
+        self.assertFalse(check_hsts("max-age=0, max-age=31536000")[0])
 
     def test_hsts_preload_eligibility(self):
         ok, detail = check_hsts("max-age=15552000; preload")

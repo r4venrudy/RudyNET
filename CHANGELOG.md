@@ -27,6 +27,7 @@
 - A `Server` header only counts as an information leak when it carries a version number
 - HSTS details say when a `preload` flag does not meet the preload list requirements
 - `frame-ancestors *` no longer counts as framing protection, and conflicting `X-Frame-Options` copies are treated as blocking, as browsers do
+- A duplicated `Strict-Transport-Security` header is graded on its first copy, the one browsers use
 
 ## 1.2.0
 
