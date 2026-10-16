@@ -46,7 +46,7 @@ def cli():
     """RudyNET: port scanning, web security grading and subdomain discovery for systems you are authorized to test."""
 
 @cli.command()
-@click.option('-t', '--target', required=True, help='Target IP or hostname')
+@click.option('-t', '--target', required=True, help='Target IP, hostname or network (e.g. 192.168.1.0/24, up to 1024 addresses)')
 @click.option('-p', '--ports', default='1-1000', help="Ports: 1-1000, 80,443, 22,80-90, top100 (can be combined: top100,8081) or - for all")
 @click.option('-T', '--timeout', default=1.0, type=click.FloatRange(0, min_open=True), help='Timeout (seconds)')
 @click.option('-s', '--scan-type', default='tcp', type=click.Choice(['tcp', 'udp', 'both']))
@@ -72,6 +72,10 @@ def scan(target: str, ports: str, timeout: float, scan_type: str, output: Option
             port_list = [p for p in port_list if p not in skipped]
             if not port_list:
                 raise ValueError("every port was excluded")
+        targets = expand_targets(target)
+        if len(targets) > 1:
+            scan_network(PortScanner, target, targets, port_list, scan_type, (timeout, banner, workers, rate), output, file)
+            return
         # Resolving the host can fail, so it belongs inside the error handling
         scanner = PortScanner(target, timeout, banner, workers, rate)
         results = scanner.scan(port_list, scan_type)
@@ -85,6 +89,21 @@ def scan(target: str, ports: str, timeout: float, scan_type: str, output: Option
     except Exception as e:
         click.echo(f"{Colors.ERROR}Error: {e}{Colors.RESET}")
         sys.exit(1)
+
+def scan_network(PortScanner, network: str, targets: List[str], port_list: List[int], scan_type: str, options: tuple, output: Optional[str], file: Optional[str]) -> None:
+    """Scan each address of a network one after another and report the hosts with open ports."""
+    hosts = []
+    show_progress = sys.stderr.isatty()
+    for n, host in enumerate(targets, 1):
+        if show_progress:
+            click.echo(f"\r{Colors.DIM}[{n}/{len(targets)}] {host}{Colors.RESET}   ", nl=False, err=True)
+        result = PortScanner(host, *options).scan(port_list, scan_type)
+        if result["open"]:
+            hosts.append(result)
+    if show_progress:
+        click.echo("\r" + " " * 40 + "\r", nl=False, err=True)
+    OutputFormatter.display_network_results({"network": network, "scanned_hosts": len(targets), "hosts": hosts}, output, file)
+
 
 @cli.command()
 @click.option('-u', '--url', required=True, help='Target URL')
@@ -170,6 +189,25 @@ def parse_resolvers(value: str) -> List[str]:
     if not servers:
         raise ValueError(f"No resolvers given: {value!r}")
     return servers
+
+
+# a /22; scanning more than this belongs in a dedicated tool such as masscan
+MAX_NETWORK_HOSTS = 1024
+
+
+def expand_targets(target: str) -> List[str]:
+    """"192.168.1.0/28" -> the usable host addresses in it; any other target is returned as is."""
+    text = target.strip()
+    if "/" not in text or "://" in text:
+        return [target]
+    try:
+        net = ipaddress.ip_network(text, strict=False)
+    except ValueError:
+        return [target]
+    if net.num_addresses > MAX_NETWORK_HOSTS:
+        raise ValueError(f"{net} has {net.num_addresses} addresses; split it into ranges of at most {MAX_NETWORK_HOSTS}")
+    # a /32 or /128 has no "hosts" on older Pythons, but the address itself is the target
+    return [str(h) for h in net.hosts()] or [str(net.network_address)]
 
 
 def parse_ports(ports_str: str) -> List[int]:

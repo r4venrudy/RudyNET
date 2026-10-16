@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 import unittest
@@ -93,3 +94,35 @@ class ExcludeTests(unittest.TestCase):
         with mock.patch.object(rudynet, "load_module", return_value=_FakeScanner):
             result = CliRunner().invoke(rudynet.cli, ["scan", "-t", "127.0.0.1", "-p", "80", "-x", "80"])
         self.assertEqual(result.exit_code, 1)
+
+
+class _NetScanner:
+    scanned = []
+
+    def __init__(self, target, timeout, banner, workers, rate):
+        self.target = target
+
+    def scan(self, ports, scan_type):
+        _NetScanner.scanned.append(self.target)
+        found = [{"port": 22, "protocol": "tcp", "service": "ssh"}] if self.target.endswith(".2") else []
+        return {"target": self.target, "ip": self.target, "scanned": len(ports), "scan_type": scan_type, "open": found}
+
+
+class NetworkTargetTests(unittest.TestCase):
+    def test_expand_targets(self):
+        self.assertEqual(rudynet.expand_targets("10.0.0.0/30"), ["10.0.0.1", "10.0.0.2"])
+        self.assertEqual(rudynet.expand_targets("10.0.0.5/32"), ["10.0.0.5"])
+        self.assertEqual(rudynet.expand_targets("example.com"), ["example.com"])
+        self.assertEqual(rudynet.expand_targets("https://example.com/a/b"), ["https://example.com/a/b"])
+        with self.assertRaises(ValueError):
+            rudynet.expand_targets("10.0.0.0/16")
+
+    def test_network_scan_lists_hosts_with_open_ports(self):
+        _NetScanner.scanned = []
+        with mock.patch.object(rudynet, "load_module", return_value=_NetScanner):
+            result = _split_runner().invoke(rudynet.cli, ["scan", "-t", "10.0.0.0/29", "-p", "22", "-o", "json"])
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(len(_NetScanner.scanned), 6)
+        report = json.loads(result.stdout)
+        self.assertEqual(report["scanned_hosts"], 6)
+        self.assertEqual([h["ip"] for h in report["hosts"]], ["10.0.0.2"])

@@ -48,7 +48,7 @@ python -m unittest discover -s tests -v
 
 | Command | Option | Default | Meaning |
 | :--- | :--- | :--- | :--- |
-| `scan` | `-t, --target` | required | IP, hostname or URL; IPv6 works with or without brackets |
+| `scan` | `-t, --target` | required | IP, hostname or URL; IPv6 works with or without brackets. A network such as `192.168.1.0/24` (up to 1024 addresses) scans each host and lists those with open ports |
 | `scan` | `-p, --ports` | `1-1000` | Range (`20-25`), list (`80,443`), a mix (`22,80-90`) , `top100` (100 commonly open TCP ports, also inside a list: `top100,8081`) or `-` for all 65535; duplicates are dropped |
 | `scan` | `-s, --scan-type` | `tcp` | `tcp`, `udp` or `both` |
 | `scan` | `-T, --timeout` | `1.0` | Seconds per connection |

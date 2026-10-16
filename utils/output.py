@@ -142,6 +142,21 @@ class OutputFormatter:
         export(results, output, file)
 
     @staticmethod
+    def display_network_results(results: Dict[str, Any], output: Optional[str] = None, file: Optional[str] = None) -> None:
+        with human_view(output, file):
+            # only hosts with something open are listed; a /24 is mostly empty addresses
+            for host in results["hosts"]:
+                print(f"{Colors.BOLD}{host['ip']}{Colors.RESET}")
+                for r in host["open"]:
+                    line = f"{Colors.SUCCESS}{r['port']:>5}/{r['protocol']:<3}  {r['service']:<14}"
+                    if r.get("banner"):
+                        line += f" {Colors.DIM}{r['banner']}{Colors.RESET}"
+                    print(line)
+                print()
+            print(f"{Colors.INFO}{len(results['hosts'])} of {results['scanned_hosts']} hosts in {results['network']} have open ports")
+        export(results, output, file)
+
+    @staticmethod
     def display_subdomain_results(results: Dict[str, Any], output: Optional[str] = None, file: Optional[str] = None) -> None:
         with human_view(output, file):
             if results["wildcard"]:
