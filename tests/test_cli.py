@@ -69,3 +69,27 @@ class ResolverOptionTests(unittest.TestCase):
         from modules.subdomain_enum import SubdomainEnum
         enum = SubdomainEnum("example.com", nameservers=["9.9.9.9"])
         self.assertEqual(enum.resolver.nameservers, ["9.9.9.9"])
+
+
+class _FakeScanner:
+    seen = None
+
+    def __init__(self, target, timeout, banner, workers, rate):
+        pass
+
+    def scan(self, ports, scan_type):
+        _FakeScanner.seen = ports
+        return {"target": "h", "ip": "127.0.0.1", "scanned": len(ports), "scan_type": scan_type, "open": []}
+
+
+class ExcludeTests(unittest.TestCase):
+    def test_excluded_ports_are_not_scanned(self):
+        with mock.patch.object(rudynet, "load_module", return_value=_FakeScanner):
+            result = CliRunner().invoke(rudynet.cli, ["scan", "-t", "127.0.0.1", "-p", "1-10", "-x", "3,5-9"])
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(_FakeScanner.seen, [1, 2, 4, 10])
+
+    def test_excluding_everything_is_an_error(self):
+        with mock.patch.object(rudynet, "load_module", return_value=_FakeScanner):
+            result = CliRunner().invoke(rudynet.cli, ["scan", "-t", "127.0.0.1", "-p", "80", "-x", "80"])
+        self.assertEqual(result.exit_code, 1)
