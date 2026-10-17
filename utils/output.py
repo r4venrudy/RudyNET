@@ -33,7 +33,7 @@ def _csv_safe(value: Any) -> Any:
 def render(results: Any, fmt: str) -> str:
     """Serialize results as json, or as flattened key/value csv or txt."""
     if fmt == "json":
-        return json.dumps(results, indent=2, default=str)
+        return json.dumps(results, indent=2, default=str, allow_nan=False)
     rows = _flatten(results)
     if fmt == "csv":
         buf = io.StringIO()
