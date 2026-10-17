@@ -11,7 +11,9 @@ from utils.colors import Colors
 def _flatten(data: Any, prefix: str = "") -> Dict[str, Any]:
     """Flatten nested dicts/lists into dotted keys for CSV and TXT export."""
     flat: Dict[str, Any] = {}
-    if isinstance(data, dict):
+    if isinstance(data, (dict, list)) and not data:
+        flat[prefix.rstrip(".")] = json.dumps(data)
+    elif isinstance(data, dict):
         for k, v in data.items():
             flat.update(_flatten(v, f"{prefix}{k}."))
     elif isinstance(data, list):
