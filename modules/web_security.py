@@ -47,11 +47,21 @@ def check_hsts(value: str) -> Tuple[bool, str]:
     """Pass when max-age is at least 180 days; report includeSubDomains/preload when present."""
     # RFC 6797 8.1: a browser only processes the first header, and duplicates arrive comma-joined
     value = value.split(",", 1)[0]
-    directives = {d.strip().split("=")[0].lower(): d.strip() for d in value.split(";") if d.strip()}
+    directives = {}
+    for directive in value.split(";"):
+        if not directive.strip():
+            continue
+        name = directive.strip().split("=", 1)[0].lower()
+        if name in directives:
+            return False, "duplicate HSTS directive"
+        directives[name] = directive.strip()
     max_age = 0
     if "max-age" in directives:
         try:
-            max_age = int(directives["max-age"].split("=", 1)[1].strip('"'))
+            raw = directives["max-age"].split("=", 1)[1].strip()
+            if not re.fullmatch(r'"[0-9]+"|[0-9]+', raw):
+                raise ValueError
+            max_age = int(raw.strip('"'))
         except (IndexError, ValueError):
             return False, "max-age is not a number"
     if max_age < 15552000:
