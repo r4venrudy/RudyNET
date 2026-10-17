@@ -37,7 +37,7 @@ def load_module(module: str, cls: str):
     try:
         return getattr(importlib.import_module(f"modules.{module}"), cls)
     except ImportError as e:
-        click.echo(f"{Colors.ERROR}The '{module}' module is unavailable: {e}{Colors.RESET}")
+        click.echo(f"{Colors.ERROR}The '{module}' module is unavailable: {e}{Colors.RESET}", err=True)
         sys.exit(1)
 
 @click.group()
@@ -81,13 +81,13 @@ def scan(target: str, ports: str, timeout: float, scan_type: str, output: Option
         results = scanner.scan(port_list, scan_type)
         OutputFormatter.display_scan_results(results, output, file)
     except socket.gaierror:
-        click.echo(f"{Colors.ERROR}Error: could not resolve host '{target}'{Colors.RESET}")
+        click.echo(f"{Colors.ERROR}Error: could not resolve host '{target}'{Colors.RESET}", err=True)
         sys.exit(1)
     except KeyboardInterrupt:
-        click.echo(f"\n{Colors.WARNING}Interrupted{Colors.RESET}")
+        click.echo(f"\n{Colors.WARNING}Interrupted{Colors.RESET}", err=True)
         sys.exit(1)
     except Exception as e:
-        click.echo(f"{Colors.ERROR}Error: {e}{Colors.RESET}")
+        click.echo(f"{Colors.ERROR}Error: {e}{Colors.RESET}", err=True)
         sys.exit(1)
 
 def scan_network(PortScanner, network: str, targets: List[str], port_list: List[int], scan_type: str, options: tuple, output: Optional[str], file: Optional[str]) -> None:
@@ -124,10 +124,10 @@ def web(url: str, output: Optional[str], file: Optional[str], ssl_only: bool, ti
         results = web_sec.check_ssl_only() if ssl_only else web_sec.full_analysis()
         OutputFormatter.display_web_results(results, output, file)
     except KeyboardInterrupt:
-        click.echo(f"\n{Colors.WARNING}Interrupted{Colors.RESET}")
+        click.echo(f"\n{Colors.WARNING}Interrupted{Colors.RESET}", err=True)
         sys.exit(1)
     except Exception as e:
-        click.echo(f"{Colors.ERROR}Error: {e}{Colors.RESET}")
+        click.echo(f"{Colors.ERROR}Error: {e}{Colors.RESET}", err=True)
         sys.exit(1)
     if fail_under is not None and results["score"] < fail_under:
         click.echo(f"{Colors.ERROR}Score {results['score']} is below {fail_under}{Colors.RESET}", err=True)
@@ -154,10 +154,10 @@ def subdomain(domain: str, wordlist: Optional[str], threads: int, crtsh: bool, t
         nameservers = parse_resolvers(resolvers) if resolvers else None
         sub_enum = SubdomainEnum(domain, wordlist, threads, timeout, nameservers)
     except OSError as e:
-        click.echo(f"{Colors.ERROR}Error: cannot read wordlist: {e}{Colors.RESET}")
+        click.echo(f"{Colors.ERROR}Error: cannot read wordlist: {e}{Colors.RESET}", err=True)
         sys.exit(1)
     except ValueError as e:
-        click.echo(f"{Colors.ERROR}Error: {e}{Colors.RESET}")
+        click.echo(f"{Colors.ERROR}Error: {e}{Colors.RESET}", err=True)
         sys.exit(1)
 
     try:
@@ -173,10 +173,10 @@ def subdomain(domain: str, wordlist: Optional[str], threads: int, crtsh: bool, t
         results = sub_enum.enumerate(extra)
         OutputFormatter.display_subdomain_results(results, output, file)
     except KeyboardInterrupt:
-        click.echo(f"\n{Colors.WARNING}Interrupted{Colors.RESET}")
+        click.echo(f"\n{Colors.WARNING}Interrupted{Colors.RESET}", err=True)
         sys.exit(1)
     except Exception as e:
-        click.echo(f"{Colors.ERROR}Error: {e}{Colors.RESET}")
+        click.echo(f"{Colors.ERROR}Error: {e}{Colors.RESET}", err=True)
         sys.exit(1)
 
 def parse_resolvers(value: str) -> List[str]:
