@@ -1,6 +1,7 @@
 """TCP connect and UDP port scanning with optional banner grabbing."""
 
 import ipaddress
+import re
 import socket
 import ssl
 import threading
@@ -52,7 +53,9 @@ def service_name(port: int, proto: str = "tcp") -> str:
 
 def clean_banner(raw: bytes, limit: int = 120) -> str:
     """First line of a service banner, decoded leniently and cut to `limit` characters."""
-    text = raw.decode("utf-8", errors="replace").strip()
+    text = raw.decode("utf-8", errors="replace")
+    text = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", text)
+    text = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", text).strip()
     first = text.splitlines()[0] if text else ""
     return first[:limit]
 
