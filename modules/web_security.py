@@ -332,7 +332,8 @@ class WebSecurity:
         if not self.https:
             return None
         try:
-            resp = requests.get(f"http://{self.host}/", timeout=self.timeout, allow_redirects=True,
+            authority = f"[{self.host}]" if ":" in self.host else self.host
+            resp = requests.get(f"http://{authority}/", timeout=self.timeout, allow_redirects=True,
                                 headers={"User-Agent": USER_AGENT})
         except requests.RequestException:
             return None
