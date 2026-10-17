@@ -76,13 +76,25 @@ def check_hsts(value: str) -> Tuple[bool, str]:
 
 def check_csp(value: str) -> Tuple[bool, str]:
     """Fail a CSP that allows unsafe-inline/unsafe-eval or has no default-src/script-src."""
-    lowered = value.lower()
-    problems = [tok for tok in ("'unsafe-inline'", "'unsafe-eval'") if tok in lowered]
-    # CSP level 2+: browsers ignore 'unsafe-inline' when the policy also has a nonce or hash
-    if "'unsafe-inline'" in problems and re.search(r"'(nonce-|sha256-|sha384-|sha512-)", lowered):
-        problems.remove("'unsafe-inline'")
-    if "default-src" not in lowered and "script-src" not in lowered:
-        problems.append("no default-src or script-src")
+    problems = []
+    # Evaluate each declared policy conservatively. First duplicate directives win.
+    for policy in value.split(","):
+        directives = {}
+        for directive in policy.split(";"):
+            parts = directive.split()
+            if parts:
+                directives.setdefault(parts[0].lower(), [token.lower() for token in parts[1:]])
+        if "default-src" not in directives and "script-src" not in directives:
+            problems.append("no default-src or script-src")
+        for name, tokens in directives.items():
+            if name != "default-src" and not name.endswith("-src") and name not in ("script-src-elem", "script-src-attr", "style-src-elem", "style-src-attr"):
+                continue
+            if "'unsafe-eval'" in tokens:
+                problems.append("'unsafe-eval'")
+            authorized = any(re.fullmatch(r"'(?:nonce-|sha256-|sha384-|sha512-)[a-z0-9+/_-]+=*'", token) for token in tokens)
+            if "'unsafe-inline'" in tokens and not authorized:
+                problems.append("'unsafe-inline'")
+    problems = list(dict.fromkeys(problems))
     if problems:
         return False, "present but weak: " + ", ".join(problems)
     return True, "present"
