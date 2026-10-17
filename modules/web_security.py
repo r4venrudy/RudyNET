@@ -105,7 +105,10 @@ def restricts_framing(csp: str) -> bool:
 def check_referrer_policy(value: str) -> Tuple[bool, str]:
     """Browsers apply the last policy they understand in a comma list, so grade that one."""
     policies = [p.strip().lower() for p in value.split(",") if p.strip()]
-    effective = policies[-1] if policies else ""
+    supported = {"no-referrer", "no-referrer-when-downgrade", "same-origin", "origin",
+                 "strict-origin", "origin-when-cross-origin", "strict-origin-when-cross-origin", "unsafe-url"}
+    recognized = [policy for policy in policies if policy in supported]
+    effective = recognized[-1] if recognized else ""
     return effective not in ("", "unsafe-url", "no-referrer-when-downgrade"), value
 
 
