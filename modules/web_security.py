@@ -35,6 +35,14 @@ def normalize_url(url: str) -> str:
     parsed = urlparse(url)
     if parsed.scheme not in ("http", "https") or not parsed.hostname:
         raise ValueError(f"Invalid URL: {url}")
+    if parsed.username is not None or parsed.password is not None:
+        raise ValueError("URL credentials are not supported.")
+    try:
+        port = parsed.port
+    except ValueError:
+        raise ValueError("Invalid URL port.") from None
+    if port == 0:
+        raise ValueError("URL port must be between 1 and 65535.")
     return url
 
 

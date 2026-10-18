@@ -38,6 +38,12 @@ class NormalizeUrlTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             normalize_url("ftp://example.com")
 
+    def test_rejects_credentials_and_invalid_ports(self):
+        for url in ("https://user:secret@example.com", "https://@example.com",
+                    "https://example.com:0", "https://example.com:bad", "https://example.com:65536"):
+            with self.subTest(url=url), self.assertRaises(ValueError):
+                normalize_url(url)
+
 
 class HeaderTests(unittest.TestCase):
     def test_strong_headers_have_no_deductions(self):
