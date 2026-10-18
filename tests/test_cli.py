@@ -96,7 +96,7 @@ class ExcludeTests(unittest.TestCase):
         self.assertEqual(result.exit_code, 1)
 
     def test_nonfinite_scan_rate_is_rejected_before_opening_ports(self):
-        result = CliRunner().invoke(
+        result = _split_runner().invoke(
             rudynet.cli,
             ["scan", "-t", "127.0.0.1", "-p", "80", "--rate", "nan"],
         )
