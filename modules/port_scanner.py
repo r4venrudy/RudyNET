@@ -1,6 +1,7 @@
 """TCP connect and UDP port scanning with optional banner grabbing."""
 
 import ipaddress
+import math
 import re
 import socket
 import ssl
@@ -94,6 +95,8 @@ class RateLimiter:
     """Spaces out calls from all worker threads to at most `rate` per second (0 means no limit)."""
 
     def __init__(self, rate: float, clock=time.monotonic, sleep=time.sleep):
+        if not math.isfinite(rate) or rate < 0:
+            raise ValueError("rate must be a finite non-negative number")
         self.interval = 1.0 / rate if rate > 0 else 0.0
         self.clock = clock
         self.sleep = sleep

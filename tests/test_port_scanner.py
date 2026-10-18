@@ -182,6 +182,11 @@ class RateLimiterTests(unittest.TestCase):
         limiter = RateLimiter(0, sleep=lambda s: self.fail("should not sleep"))
         limiter.wait()
 
+    def test_rejects_negative_and_nonfinite_rates(self):
+        for invalid in (-1, float("nan"), float("inf"), float("-inf")):
+            with self.subTest(rate=invalid), self.assertRaisesRegex(ValueError, "finite non-negative"):
+                RateLimiter(invalid)
+
 
 class UdpBannerTests(unittest.TestCase):
     def test_ssdp_server_header(self):
