@@ -51,6 +51,16 @@ class SubdomainTests(unittest.TestCase):
         result = enum.enumerate()
         self.assertEqual(result["found"], [{"subdomain": "www.example.com", "ips": ["2001:db8::10"], "cname": None}])
 
+    def test_unique_ipv6_answer_survives_wildcard_ipv4_filtering(self):
+        enum = FakeResolverEnum({
+            "www.example.com": ["10.0.0.1"],
+            ("www.example.com", "AAAA"): ["2001:db8::10"],
+        }, wildcard=["10.0.0.1"])
+        result = enum.enumerate()
+        self.assertEqual(result["found"], [{
+            "subdomain": "www.example.com", "ips": ["10.0.0.1", "2001:db8::10"], "cname": None,
+        }])
+
     def test_wildcard_answers_are_filtered(self):
         records = {f"{w}.example.com": ["10.0.0.1"] for w in ("www", "mail")}
         records["api.example.com"] = ["10.0.0.9"]
